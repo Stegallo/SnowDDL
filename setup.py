@@ -31,7 +31,7 @@ Main features: [https://docs.snowddl.com/features](https://docs.snowddl.com/feat
 Enjoy!
     """,
     long_description_content_type="text/markdown",
-    url="https://github.com/littleK0i/snowddl",
+    url="https://github.com/Stegallo/snowddl",
     author="Vitaly Markov",
     author_email="wild.desu@gmail.com",
     classifiers=[
