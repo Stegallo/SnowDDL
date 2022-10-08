@@ -1,5 +1,9 @@
-from snowddl.blueprint import OutboundShareBlueprint, Grant, build_grant_name_ident_snowflake
-from snowddl.resolver.abc_resolver import AbstractResolver, ResolveResult, ObjectType
+from snowddl.blueprint import (
+    Grant,
+    OutboundShareBlueprint,
+    build_grant_name_ident_snowflake,
+)
+from snowddl.resolver.abc_resolver import AbstractResolver, ObjectType, ResolveResult
 
 
 class OutboundShareResolver(AbstractResolver):
@@ -14,20 +18,20 @@ class OutboundShareResolver(AbstractResolver):
         cur = self.engine.execute_meta("SHOW SHARES")
 
         for r in cur:
-            if r['kind'] != 'OUTBOUND':
+            if r["kind"] != "OUTBOUND":
                 continue
 
-            if r['owner'] != self.engine.context.current_role:
+            if r["owner"] != self.engine.context.current_role:
                 continue
 
             # Remove organization and account prefix, shares are referred in SQL by name only
-            full_name = r['name'].split('.')[-1]
+            full_name = r["name"].split(".")[-1]
 
             existing_objects[full_name] = {
                 "share": full_name,
-                "database": r['database_name'],
-                "accounts": r['to'].split(',') if r['to'] else [],
-                "comment": r['comment'] if r['comment'] else None,
+                "database": r["database_name"],
+                "accounts": r["to"].split(",") if r["to"] else [],
+                "comment": r["comment"] if r["comment"] else None,
             }
 
         return existing_objects
@@ -38,16 +42,24 @@ class OutboundShareResolver(AbstractResolver):
     def create_object(self, bp: OutboundShareBlueprint):
         query = self.engine.query_builder()
 
-        query.append("CREATE SHARE {full_name:i}", {
-            "full_name": bp.full_name,
-        })
+        query.append(
+            "CREATE SHARE {full_name:i}",
+            {
+                "full_name": bp.full_name,
+            },
+        )
 
         if bp.comment:
-            query.append_nl("COMMENT = {comment}", {
-                "comment": bp.comment,
-            })
+            query.append_nl(
+                "COMMENT = {comment}",
+                {
+                    "comment": bp.comment,
+                },
+            )
 
-        self.engine.execute_unsafe_ddl(query, condition=self.engine.settings.execute_outbound_share)
+        self.engine.execute_unsafe_ddl(
+            query, condition=self.engine.settings.execute_outbound_share
+        )
 
         for bp_grant in bp.grants:
             self.create_grant(bp.full_name, bp_grant)
@@ -74,24 +86,32 @@ class OutboundShareResolver(AbstractResolver):
 
         # SHOW SHARES command returns only 3 accounts for each OUTBOUND SHARE
         # If you have to set more accounts, it will work, but SnowDDL will be forced to run SET ACCOUNTS every time
-        if [str(a) for a in bp.accounts] != row['accounts']:
+        if [str(a) for a in bp.accounts] != row["accounts"]:
             self.set_accounts(bp)
             result = ResolveResult.ALTER
 
-        if bp.comment != row['comment']:
-            self.engine.execute_safe_ddl("ALTER SHARE {full_name:i} SET COMMENT = {comment}", {
-                "full_name": bp.full_name,
-                "comment": bp.comment,
-            }, condition=self.engine.settings.execute_outbound_share)
+        if bp.comment != row["comment"]:
+            self.engine.execute_safe_ddl(
+                "ALTER SHARE {full_name:i} SET COMMENT = {comment}",
+                {
+                    "full_name": bp.full_name,
+                    "comment": bp.comment,
+                },
+                condition=self.engine.settings.execute_outbound_share,
+            )
 
             result = ResolveResult.ALTER
 
         return result
 
     def drop_object(self, row: dict):
-        self.engine.execute_unsafe_ddl("DROP SHARE {share_name:i}", {
-            "share_name": row['share'],
-        }, condition=self.engine.settings.execute_outbound_share)
+        self.engine.execute_unsafe_ddl(
+            "DROP SHARE {share_name:i}",
+            {
+                "share_name": row["share"],
+            },
+            condition=self.engine.settings.execute_outbound_share,
+        )
 
         return ResolveResult.DROP
 
@@ -99,51 +119,76 @@ class OutboundShareResolver(AbstractResolver):
         if bp.accounts:
             query = self.engine.query_builder()
 
-            query.append("ALTER SHARE {full_name:i} SET ACCOUNTS = {accounts:i}", {
-                "full_name": bp.full_name,
-                "accounts": bp.accounts,
-            })
+            query.append(
+                "ALTER SHARE {full_name:i} SET ACCOUNTS = {accounts:i}",
+                {
+                    "full_name": bp.full_name,
+                    "accounts": bp.accounts,
+                },
+            )
 
             if bp.share_restrictions is not None:
-                query.append_nl("SHARE_RESTRICTIONS = {share_restrictions:b}", {
-                    "share_restrictions": bp.share_restrictions
-                })
+                query.append_nl(
+                    "SHARE_RESTRICTIONS = {share_restrictions:b}",
+                    {"share_restrictions": bp.share_restrictions},
+                )
 
-            self.engine.execute_unsafe_ddl(query, condition=self.engine.settings.execute_outbound_share)
+            self.engine.execute_unsafe_ddl(
+                query, condition=self.engine.settings.execute_outbound_share
+            )
         else:
             # Special case for all consumer accounts being removed from SHARE
-            self.engine.execute_unsafe_ddl("ALTER SHARE {full_name:i} SET ACCOUNTS = NULL", {
-                "full_name": bp.full_name,
-            }, condition=self.engine.settings.execute_outbound_share)
+            self.engine.execute_unsafe_ddl(
+                "ALTER SHARE {full_name:i} SET ACCOUNTS = NULL",
+                {
+                    "full_name": bp.full_name,
+                },
+                condition=self.engine.settings.execute_outbound_share,
+            )
 
     def create_grant(self, share_name, grant: Grant):
-        self.engine.execute_unsafe_ddl("GRANT {privilege:r} ON {on:r} {name:i} TO SHARE {share_name:i}", {
-            "privilege": grant.privilege,
-            "on": grant.on.singular,
-            "name": grant.name,
-            "share_name": share_name,
-        }, condition=self.engine.settings.execute_outbound_share)
+        self.engine.execute_unsafe_ddl(
+            "GRANT {privilege:r} ON {on:r} {name:i} TO SHARE {share_name:i}",
+            {
+                "privilege": grant.privilege,
+                "on": grant.on.singular,
+                "name": grant.name,
+                "share_name": share_name,
+            },
+            condition=self.engine.settings.execute_outbound_share,
+        )
 
     def drop_grant(self, share_name, grant: Grant):
-        self.engine.execute_unsafe_ddl("REVOKE {privilege:r} ON {on:r} {name:i} FROM SHARE {share_name:i}", {
-            "privilege": grant.privilege,
-            "on": grant.on.singular,
-            "name": grant.name,
-            "share_name": share_name,
-        }, condition=self.engine.settings.execute_outbound_share)
+        self.engine.execute_unsafe_ddl(
+            "REVOKE {privilege:r} ON {on:r} {name:i} FROM SHARE {share_name:i}",
+            {
+                "privilege": grant.privilege,
+                "on": grant.on.singular,
+                "name": grant.name,
+                "share_name": share_name,
+            },
+            condition=self.engine.settings.execute_outbound_share,
+        )
 
     def get_existing_share_grants(self, share_name):
         grants = []
 
-        cur = self.engine.execute_meta("SHOW GRANTS TO SHARE {share_name:i}", {
-            "share_name": share_name,
-        })
+        cur = self.engine.execute_meta(
+            "SHOW GRANTS TO SHARE {share_name:i}",
+            {
+                "share_name": share_name,
+            },
+        )
 
         for r in cur:
-            grants.append(Grant(
-                privilege=r['privilege'],
-                on=ObjectType[r['granted_on']],
-                name=build_grant_name_ident_snowflake(r['name'], ObjectType[r['granted_on']]),
-            ))
+            grants.append(
+                Grant(
+                    privilege=r["privilege"],
+                    on=ObjectType[r["granted_on"]],
+                    name=build_grant_name_ident_snowflake(
+                        r["name"], ObjectType[r["granted_on"]]
+                    ),
+                )
+            )
 
         return grants

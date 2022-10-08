@@ -7,8 +7,8 @@ from .external_table import ExternalTableParser
 from .file_format import FileFormatParser
 from .function import FunctionParser
 from .inbound_share import InboundShareParser
-from .materialized_view import MaterializedViewParser
 from .masking_policy import MaskingPolicyParser
+from .materialized_view import MaterializedViewParser
 from .network_policy import NetworkPolicyParser
 from .outbound_share import OutboundShareParser
 from .pipe import PipeParser
@@ -26,7 +26,6 @@ from .tech_role import TechRoleParser
 from .user import UserParser
 from .view import ViewParser
 from .warehouse import WarehouseParser
-
 
 default_parser_sequence = [
     AccountParameterParser,

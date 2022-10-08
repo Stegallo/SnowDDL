@@ -1,5 +1,5 @@
 from enum import Enum
-from re import compile, IGNORECASE
+from re import IGNORECASE, compile
 
 
 class BaseDataType(Enum):
@@ -80,14 +80,16 @@ class BaseDataType(Enum):
 
     @property
     def number_of_properties(self) -> int:
-        return self.value.get('number_of_properties', 0)
+        return self.value.get("number_of_properties", 0)
 
     def __repr__(self):
         return f"<{self.__class__.__name__}.{self.name}>"
 
 
 class DataType:
-    data_type_re = compile(r'^(?P<base_type>[a-z0-9_]+)(\((?P<val1>\d+)(,(?P<val2>\d+))?\))?$', IGNORECASE)
+    data_type_re = compile(
+        r"^(?P<base_type>[a-z0-9_]+)(\((?P<val1>\d+)(,(?P<val2>\d+))?\))?$", IGNORECASE
+    )
 
     def __init__(self, data_type_str):
         m = self.data_type_re.match(data_type_str)
@@ -96,12 +98,14 @@ class DataType:
             raise ValueError(f"Could not parse data type string [{data_type_str}]")
 
         try:
-            self.base_type = BaseDataType[str(m['base_type']).upper()]
+            self.base_type = BaseDataType[str(m["base_type"]).upper()]
         except KeyError:
-            raise ValueError(f"Invalid base data type [{m['base_type']}] in type string [{data_type_str}]")
+            raise ValueError(
+                f"Invalid base data type [{m['base_type']}] in type string [{data_type_str}]"
+            )
 
-        self.val1 = int(m['val1']) if self.base_type.number_of_properties >= 1 else None
-        self.val2 = int(m['val2']) if self.base_type.number_of_properties >= 2 else None
+        self.val1 = int(m["val1"]) if self.base_type.number_of_properties >= 1 else None
+        self.val2 = int(m["val2"]) if self.base_type.number_of_properties >= 2 else None
 
     def __str__(self):
         if self.base_type.number_of_properties >= 2:
