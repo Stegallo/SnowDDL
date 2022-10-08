@@ -20,22 +20,21 @@ from .primary_key import PrimaryKeyResolver
 from .procedure import ProcedureResolver
 from .resource_monitor import ResourceMonitorResolver
 from .row_access_policy import RowAccessPolicyResolver
-from .sequence import SequenceResolver
 from .schema import SchemaResolver
 from .schema_role import SchemaRoleResolver
+from .sequence import SequenceResolver
 from .stage import StageResolver
 from .stage_file import StageFileResolver
 from .stream import StreamResolver
 from .table import TableResolver
 from .task import TaskResolver
 from .tech_role import TechRoleResolver
-from .view import ViewResolver
 from .unique_key import UniqueKeyResolver
 from .user import UserResolver
 from .user_role import UserRoleResolver
+from .view import ViewResolver
 from .warehouse import WarehouseResolver
 from .warehouse_role import WarehouseRoleResolver
-
 
 default_resolver_sequence = [
     AccountParameterResolver,

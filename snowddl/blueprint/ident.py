@@ -6,7 +6,7 @@ from .data_type import BaseDataType
 
 
 class AbstractIdent(ABC):
-    allowed_chars = set(ascii_letters + digits + '_$')
+    allowed_chars = set(ascii_letters + digits + "_$")
 
     @abstractmethod
     def __init__(self):
@@ -22,7 +22,7 @@ class AbstractIdent(ABC):
         if argument_parts is not None:
             return f"{'.'.join(core_parts)}({','.join(argument_parts)})"
 
-        return '.'.join(core_parts)
+        return ".".join(core_parts)
 
     def __repr__(self):
         return f"<{self.__class__.__name__}={str(self)}>"
@@ -41,7 +41,9 @@ class AbstractIdent(ABC):
 
         for char in val:
             if char not in self.allowed_chars:
-                raise ValueError(f"Character [{char}] in not allowed in identifier [{val}], only ASCII letters, digits and single underscores are accepted")
+                raise ValueError(
+                    f"Character [{char}] in not allowed in identifier [{val}], only ASCII letters, digits and single underscores are accepted"
+                )
 
         return val.upper()
 
@@ -55,10 +57,14 @@ class AbstractIdentWithPrefix(AbstractIdent, ABC):
 
         for char in val:
             if char not in self.allowed_chars:
-                raise ValueError(f"Character [{char}] in not allowed in env prefix [{val}], only ASCII letters, digits and single underscores are accepted")
+                raise ValueError(
+                    f"Character [{char}] in not allowed in env prefix [{val}], only ASCII letters, digits and single underscores are accepted"
+                )
 
-        if val and not val.endswith('__'):
-            raise ValueError(f"Env prefix [{val}] in identifier must end with [__] double underscore")
+        if val and not val.endswith("__"):
+            raise ValueError(
+                f"Env prefix [{val}] in identifier must end with [__] double underscore"
+            )
 
         return val.upper()
 
@@ -152,13 +158,17 @@ class SchemaObjectIdent(AbstractIdentWithPrefix):
 
 
 class SchemaObjectIdentWithArgs(SchemaObjectIdent):
-    def __init__(self, env_prefix, database, schema, name, data_types: List[BaseDataType]):
+    def __init__(
+        self, env_prefix, database, schema, name, data_types: List[BaseDataType]
+    ):
         super().__init__(env_prefix, database, schema, name)
 
         self.data_types = data_types
 
     def parts_for_format(self):
-        return [f"{self.env_prefix}{self.database}", self.schema, self.name], [data_type.name for data_type in self.data_types]
+        return [f"{self.env_prefix}{self.database}", self.schema, self.name], [
+            data_type.name for data_type in self.data_types
+        ]
 
 
 class StageFileIdent(SchemaObjectIdent):
@@ -168,7 +178,9 @@ class StageFileIdent(SchemaObjectIdent):
         self.path = path
 
     def parts_for_format(self):
-        return [f"{self.env_prefix}{self.database}", self.schema, self.name], [self.path]
+        return [f"{self.env_prefix}{self.database}", self.schema, self.name], [
+            self.path
+        ]
 
 
 class TableConstraintIdent(SchemaObjectIdent):
@@ -178,4 +190,6 @@ class TableConstraintIdent(SchemaObjectIdent):
         self.columns = columns
 
     def parts_for_format(self):
-        return [f"{self.env_prefix}{self.database}", self.schema, self.name], [str(c) for c in self.columns]
+        return [f"{self.env_prefix}{self.database}", self.schema, self.name], [
+            str(c) for c in self.columns
+        ]

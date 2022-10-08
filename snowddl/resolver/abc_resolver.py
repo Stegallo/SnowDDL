@@ -1,26 +1,25 @@
 from abc import ABC, abstractmethod
+from concurrent.futures import as_completed
 from enum import Enum
 from traceback import format_exc
+from typing import TYPE_CHECKING, Dict
 
-from concurrent.futures import as_completed
-from typing import Dict, TYPE_CHECKING
-
-from snowddl.error import SnowDDLExecuteError, SnowDDLUnsupportedError
 from snowddl.blueprint import AbstractBlueprint, DependsOnMixin, Edition, ObjectType
+from snowddl.error import SnowDDLExecuteError, SnowDDLUnsupportedError
 
 if TYPE_CHECKING:
     from snowddl.engine import SnowDDLEngine
 
 
 class ResolveResult(Enum):
-    CREATE      = "CREATE"
-    ALTER       = "ALTER"
-    DROP        = "DROP"
-    REPLACE     = "REPLACE"
-    SKIP        = "SKIP"
-    GRANT       = "GRANT"
-    NOCHANGE    = "NOCHANGE"
-    ERROR       = "ERROR"
+    CREATE = "CREATE"
+    ALTER = "ALTER"
+    DROP = "DROP"
+    REPLACE = "REPLACE"
+    SKIP = "SKIP"
+    GRANT = "GRANT"
+    NOCHANGE = "NOCHANGE"
+    ERROR = "ERROR"
     UNSUPPORTED = "UNSUPPORTED"
 
 
@@ -34,10 +33,10 @@ class AbstractResolver(ABC):
 
         self.object_type = self.get_object_type()
         self.blueprints: Dict[str, AbstractBlueprint] = {}
-        self.existing_objects: Dict[str,Dict] = {}
+        self.existing_objects: Dict[str, Dict] = {}
 
-        self.resolved_objects: Dict[str,ResolveResult] = {}
-        self.errors: Dict[str,Exception] = {}
+        self.resolved_objects: Dict[str, ResolveResult] = {}
+        self.errors: Dict[str, Exception] = {}
 
     def resolve(self):
         if self._is_skipped():
@@ -48,7 +47,9 @@ class AbstractResolver(ABC):
         try:
             self.existing_objects = self.get_existing_objects()
         except SnowDDLExecuteError as e:
-            self.engine.logger.info(f"Could not get existing objects for resolver [{self.__class__.__name__}]: \n{e.verbose_message()}")
+            self.engine.logger.info(
+                f"Could not get existing objects for resolver [{self.__class__.__name__}]: \n{e.verbose_message()}"
+            )
             raise e.snow_exc
 
         self._pre_process()
@@ -63,7 +64,9 @@ class AbstractResolver(ABC):
         try:
             self.existing_objects = self.get_existing_objects()
         except SnowDDLExecuteError as e:
-            self.engine.logger.info(f"Could not get existing objects for resolver [{self.__class__.__name__}]: \n{e.verbose_message()}")
+            self.engine.logger.info(
+                f"Could not get existing objects for resolver [{self.__class__.__name__}]: \n{e.verbose_message()}"
+            )
             raise e.snow_exc
 
         self._pre_process()
@@ -77,7 +80,11 @@ class AbstractResolver(ABC):
 
             for full_name in sorted(blueprint_names_batch):
                 if full_name in self.existing_objects:
-                    tasks[full_name] = (self.compare_object, self.blueprints[full_name], self.existing_objects[full_name])
+                    tasks[full_name] = (
+                        self.compare_object,
+                        self.blueprints[full_name],
+                        self.existing_objects[full_name],
+                    )
                 else:
                     tasks[full_name] = (self.create_object, self.blueprints[full_name])
 
@@ -114,9 +121,13 @@ class AbstractResolver(ABC):
             try:
                 result = f.result()
                 if result == ResolveResult.NOCHANGE:
-                    self.engine.logger.debug(f"Resolved {self.object_type.name} [{full_name}]: {result.value}")
+                    self.engine.logger.debug(
+                        f"Resolved {self.object_type.name} [{full_name}]: {result.value}"
+                    )
                 else:
-                    self.engine.logger.info(f"Resolved {self.object_type.name} [{full_name}]: {result.value}")
+                    self.engine.logger.info(
+                        f"Resolved {self.object_type.name} [{full_name}]: {result.value}"
+                    )
             except Exception as e:
                 if isinstance(e, SnowDDLUnsupportedError):
                     result = ResolveResult.UNSUPPORTED
@@ -128,7 +139,9 @@ class AbstractResolver(ABC):
                 else:
                     error_text = format_exc()
 
-                self.engine.logger.warning(f"Resolved {self.object_type.name} [{full_name}]: {result.value}\n{error_text}")
+                self.engine.logger.warning(
+                    f"Resolved {self.object_type.name} [{full_name}]: {result.value}\n{error_text}"
+                )
                 self.errors[full_name] = e
 
             self.resolved_objects[full_name] = result
@@ -147,9 +160,11 @@ class AbstractResolver(ABC):
 
             # Allocate blueprints with no dependencies or fully resolved dependencies
             for full_name, bp in remaining_blueprints.items():
-                if not isinstance(bp, DependsOnMixin) \
-                or not bp.depends_on \
-                or all((str(d) in allocated_full_names) for d in bp.depends_on):
+                if (
+                    not isinstance(bp, DependsOnMixin)
+                    or not bp.depends_on
+                    or all((str(d) in allocated_full_names) for d in bp.depends_on)
+                ):
                     batch.append(full_name)
 
             # Allocate blueprints with unresolved dependencies to the last batch

@@ -1,16 +1,18 @@
-from jsonschema import validate
 from pathlib import Path
-from re import compile, IGNORECASE
+from re import IGNORECASE, compile
 from typing import TYPE_CHECKING
+
+from jsonschema import validate
 from yaml import safe_load
 
 if TYPE_CHECKING:
     from snowddl.parser.abc_parser import AbstractParser
 
+
 class ParsedFile:
-    placeholder_start = '${{ '
-    placeholder_end = ' }}'
-    placeholder_re = compile(r'\${{\s([a-z0-9._-]+)\s}}', IGNORECASE)
+    placeholder_start = "${{ "
+    placeholder_end = " }}"
+    placeholder_re = compile(r"\${{\s([a-z0-9._-]+)\s}}", IGNORECASE)
 
     def __init__(self, parser: "AbstractParser", path: Path, json_schema: dict):
         self.parser = parser
@@ -41,7 +43,7 @@ class ParsedFile:
             self.schema = relative_path.parts[1]
 
     def _load_params(self):
-        with self.path.open('r', encoding='utf-8') as f:
+        with self.path.open("r", encoding="utf-8") as f:
             self.params = safe_load(f) or {}
 
     def _apply_placeholders(self, data: dict):
@@ -49,7 +51,10 @@ class ParsedFile:
             if isinstance(v, dict):
                 self._apply_placeholders(v)
             elif isinstance(v, list):
-                data[k] = [self._apply_placeholders_inner(i) if isinstance(i, str) else i for i in v]
+                data[k] = [
+                    self._apply_placeholders_inner(i) if isinstance(i, str) else i
+                    for i in v
+                ]
             elif isinstance(v, str):
                 data[k] = self._apply_placeholders_inner(v)
 
@@ -62,7 +67,12 @@ class ParsedFile:
                 return self.parser.config.get_placeholder(m.group(1).upper())
             else:
                 # Value is a string with multiple placeholders or other parts, replace and return as string
-                return self.placeholder_re.sub(lambda m: str(self.parser.config.get_placeholder(m.group(1).upper())), val)
+                return self.placeholder_re.sub(
+                    lambda m: str(
+                        self.parser.config.get_placeholder(m.group(1).upper())
+                    ),
+                    val,
+                )
 
         return val
 

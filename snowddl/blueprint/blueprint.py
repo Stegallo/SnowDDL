@@ -1,11 +1,24 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Union, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional, TypeVar, Union
 
-from .column import ExternalTableColumn, TableColumn, ViewColumn, NameWithType
+from .column import ExternalTableColumn, NameWithType, TableColumn, ViewColumn
 from .data_type import DataType
-from .grant import Grant, FutureGrant
-from .ident import AbstractIdent, Ident, AccountObjectIdent, DatabaseIdent, AccountIdent, InboundShareIdent, OutboundShareIdent, SchemaIdent, SchemaObjectIdent, SchemaObjectIdentWithArgs, StageFileIdent, TableConstraintIdent
+from .grant import FutureGrant, Grant
+from .ident import (
+    AbstractIdent,
+    AccountIdent,
+    AccountObjectIdent,
+    DatabaseIdent,
+    Ident,
+    InboundShareIdent,
+    OutboundShareIdent,
+    SchemaIdent,
+    SchemaObjectIdent,
+    SchemaObjectIdentWithArgs,
+    StageFileIdent,
+    TableConstraintIdent,
+)
 from .reference import MaskingPolicyReference, RowAccessPolicyReference, TagReference
 from .stage import StageWithPath
 
@@ -40,7 +53,7 @@ class DependsOnMixin(ABC):
 @dataclass
 class AccountParameterBlueprint(AbstractBlueprint):
     full_name: Ident
-    value: Union[bool,float,int,str]
+    value: Union[bool, float, int, str]
 
 
 @dataclass
@@ -72,7 +85,7 @@ class ExternalFunctionBlueprint(SchemaObjectBlueprint):
     is_secure: bool
     is_strict: bool
     is_immutable: bool
-    headers: Optional[Dict[str,str]]
+    headers: Optional[Dict[str, str]]
     context_headers: Optional[List[Ident]]
     max_batch_rows: Optional[int]
     compression: Optional[str]
@@ -99,7 +112,7 @@ class ExternalTableBlueprint(SchemaObjectBlueprint):
 @dataclass
 class FileFormatBlueprint(SchemaObjectBlueprint):
     type: str
-    format_options: Optional[Dict[str,Union[bool,float,int,str,list]]]
+    format_options: Optional[Dict[str, Union[bool, float, int, str, list]]]
 
 
 @dataclass
@@ -117,7 +130,7 @@ class FunctionBlueprint(SchemaObjectBlueprint):
     language: str
     body: Optional[str]
     arguments: List[NameWithType]
-    returns: Union[DataType,List[NameWithType]]
+    returns: Union[DataType, List[NameWithType]]
     is_secure: bool
     is_strict: bool
     is_immutable: bool
@@ -176,7 +189,7 @@ class PipeBlueprint(SchemaObjectBlueprint):
     copy_pattern: Optional[str]
     copy_transform: Optional[Dict[str, str]]
     copy_file_format: Optional[SchemaObjectIdent]
-    copy_options: Optional[Dict[str,Union[bool,float,int,str,list]]]
+    copy_options: Optional[Dict[str, Union[bool, float, int, str, list]]]
     aws_sns_topic: Optional[str]
     integration: Optional[Ident]
 
@@ -194,7 +207,7 @@ class ProcedureBlueprint(SchemaObjectBlueprint):
     language: str
     body: str
     arguments: List[NameWithType]
-    returns: Union[DataType,List[NameWithType]]
+    returns: Union[DataType, List[NameWithType]]
     is_strict: bool
     is_immutable: bool
     is_execute_as_caller: bool
@@ -209,7 +222,7 @@ class ResourceMonitorBlueprint(AbstractBlueprint):
     full_name: Ident
     credit_quota: int
     frequency: str
-    triggers: Dict[int,str]
+    triggers: Dict[int, str]
 
 
 @dataclass
@@ -238,10 +251,10 @@ class SchemaRoleBlueprint(RoleBlueprint, DependsOnMixin):
 class StageBlueprint(SchemaObjectBlueprint):
     url: Optional[str]
     storage_integration: Optional[Ident]
-    encryption: Optional[Dict[str,str]]
-    directory: Optional[Dict[str,str]]
+    encryption: Optional[Dict[str, str]]
+    directory: Optional[Dict[str, str]]
     file_format: Optional[SchemaObjectIdent]
-    copy_options: Optional[Dict[str,Union[bool,float,int,str,list]]]
+    copy_options: Optional[Dict[str, Union[bool, float, int, str, list]]]
     upload_stage_files: bool
 
 
@@ -293,7 +306,7 @@ class TaskBlueprint(SchemaObjectBlueprint, DependsOnMixin):
     warehouse: Optional[AccountObjectIdent]
     user_task_managed_initial_warehouse_size: Optional[str]
     allow_overlapping_execution: Optional[bool]
-    session_params: Optional[Dict[str,Union[bool,float,int,str]]]
+    session_params: Optional[Dict[str, Union[bool, float, int, str]]]
     user_task_timeout_ms: Optional[int]
 
 
@@ -324,7 +337,7 @@ class UserBlueprint(AbstractBlueprint):
     rsa_public_key_2: Optional[str]
     default_warehouse: Optional[AccountObjectIdent]
     default_namespace: Optional[Union[DatabaseIdent, SchemaIdent]]
-    session_params: Optional[Dict[str,Union[bool,float,int,str]]]
+    session_params: Optional[Dict[str, Union[bool, float, int, str]]]
 
 
 @dataclass
@@ -345,4 +358,4 @@ class WarehouseBlueprint(AbstractBlueprint):
     resource_monitor: Optional[Ident]
 
 
-T_Blueprint = TypeVar('T_Blueprint', bound=AbstractBlueprint)
+T_Blueprint = TypeVar("T_Blueprint", bound=AbstractBlueprint)

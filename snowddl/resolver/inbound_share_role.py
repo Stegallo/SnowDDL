@@ -1,4 +1,10 @@
-from snowddl.blueprint import RoleBlueprint, DatabaseShareBlueprint, Grant, build_role_ident, build_grant_name_ident_snowflake
+from snowddl.blueprint import (
+    DatabaseShareBlueprint,
+    Grant,
+    RoleBlueprint,
+    build_grant_name_ident_snowflake,
+    build_role_ident,
+)
 from snowddl.resolver.abc_role_resolver import AbstractRoleResolver, ObjectType
 
 
@@ -14,19 +20,26 @@ class InboundShareRoleResolver(AbstractRoleResolver):
         # IMPORTED PRIVILEGES grant has to be emulated
         grants = []
 
-        cur = self.engine.execute_meta("SHOW GRANTS TO ROLE {role_name:i}", {
-            "role_name": role_name,
-        })
+        cur = self.engine.execute_meta(
+            "SHOW GRANTS TO ROLE {role_name:i}",
+            {
+                "role_name": role_name,
+            },
+        )
 
         for r in cur:
             # Convert DATABASE.USAGE grant into IMPORTED PRIVILEGES
             # Ignore everything else
-            if r['privilege'] == 'USAGE' and r['granted_on'] == 'DATABASE':
-                grants.append(Grant(
-                    privilege="IMPORTED PRIVILEGES",
-                    on=ObjectType.DATABASE,
-                    name=build_grant_name_ident_snowflake(r['name'], ObjectType.DATABASE),
-                ))
+            if r["privilege"] == "USAGE" and r["granted_on"] == "DATABASE":
+                grants.append(
+                    Grant(
+                        privilege="IMPORTED PRIVILEGES",
+                        on=ObjectType.DATABASE,
+                        name=build_grant_name_ident_snowflake(
+                            r["name"], ObjectType.DATABASE
+                        ),
+                    )
+                )
 
                 break
 
@@ -43,14 +56,18 @@ class InboundShareRoleResolver(AbstractRoleResolver):
     def get_blueprint_inbound_share_role(self, bp: DatabaseShareBlueprint):
         grants = []
 
-        grants.append(Grant(
-            privilege="IMPORTED PRIVILEGES",
-            on=ObjectType.DATABASE,
-            name=bp.full_name,
-        ))
+        grants.append(
+            Grant(
+                privilege="IMPORTED PRIVILEGES",
+                on=ObjectType.DATABASE,
+                name=bp.full_name,
+            )
+        )
 
         return RoleBlueprint(
-            full_name=build_role_ident(self.config.env_prefix, bp.full_name.database, self.get_role_suffix()),
+            full_name=build_role_ident(
+                self.config.env_prefix, bp.full_name.database, self.get_role_suffix()
+            ),
             grants=grants,
             future_grants=[],
             comment=None,

@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union
 
 if TYPE_CHECKING:
-    from .ident import Ident, SchemaObjectIdent
     from .data_type import DataType
+    from .ident import Ident, SchemaObjectIdent
 
 
 @dataclass

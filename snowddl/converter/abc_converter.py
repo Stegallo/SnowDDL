@@ -1,15 +1,16 @@
 from abc import ABC, abstractmethod
-from enum import Enum
 from concurrent.futures import as_completed
-from jsonschema import validate
+from enum import Enum
 from pathlib import Path
 from traceback import format_exc
-from typing import Dict, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List
+
+from jsonschema import validate
 from yaml import dump_all
 
-from snowddl.error import SnowDDLExecuteError
-from snowddl.blueprint import ObjectType, Edition
+from snowddl.blueprint import Edition, ObjectType
 from snowddl.converter._yaml import SnowDDLDumper, YamlFoldedStr, YamlLiteralStr
+from snowddl.error import SnowDDLExecuteError
 
 if TYPE_CHECKING:
     from snowddl.engine import SnowDDLEngine
@@ -35,7 +36,9 @@ class AbstractConverter(ABC):
         self.object_type = self.get_object_type()
         self.existing_objects: Dict[str, Dict] = {}
 
-        self.converted_objects: Dict[ConvertResult, List[str]] = {k: [] for k in ConvertResult}
+        self.converted_objects: Dict[ConvertResult, List[str]] = {
+            k: [] for k in ConvertResult
+        }
         self.errors: Dict[str, Exception] = {}
 
     def convert(self):
@@ -45,7 +48,9 @@ class AbstractConverter(ABC):
         try:
             self.existing_objects = self.get_existing_objects()
         except SnowDDLExecuteError as e:
-            self.engine.logger.info(f"Could not get existing objects for converter [{self.__class__.__name__}]: \n{e.verbose_message()}")
+            self.engine.logger.info(
+                f"Could not get existing objects for converter [{self.__class__.__name__}]: \n{e.verbose_message()}"
+            )
             raise e.snow_exc
 
         tasks = {}
@@ -66,7 +71,9 @@ class AbstractConverter(ABC):
 
             try:
                 result = f.result()
-                self.engine.logger.info(f"Converted {self.object_type.name} [{full_name}]: {result.value}")
+                self.engine.logger.info(
+                    f"Converted {self.object_type.name} [{full_name}]: {result.value}"
+                )
             except Exception as e:
                 result = ConvertResult.ERROR
 
@@ -75,7 +82,9 @@ class AbstractConverter(ABC):
                 else:
                     error_text = format_exc()
 
-                self.engine.logger.warning(f"Converted {self.object_type.name} [{full_name}]: {result.value}\n{error_text}")
+                self.engine.logger.warning(
+                    f"Converted {self.object_type.name} [{full_name}]: {result.value}\n{error_text}"
+                )
                 self.errors[full_name] = e
 
             self.converted_objects[result].append(full_name)
@@ -94,13 +103,13 @@ class AbstractConverter(ABC):
 
     def _dump_file(self, file_path: Path, data: Dict, json_schema: dict):
         # Remove None values
-        data = {k:v for k,v in data.items() if v is not None}
+        data = {k: v for k, v in data.items() if v is not None}
 
         # Validate JSON schema
         validate(data, json_schema)
 
         # (Over)write file
-        with file_path.open('w', encoding='utf-8') as f:
+        with file_path.open("w", encoding="utf-8") as f:
             dump_all([data], f, Dumper=SnowDDLDumper, sort_keys=False)
 
     def _normalise_name(self, name: str):
@@ -108,7 +117,7 @@ class AbstractConverter(ABC):
 
     def _normalise_name_with_prefix(self, name: str):
         if name.startswith(self.env_prefix):
-            name = name[len(self.env_prefix):]
+            name = name[len(self.env_prefix) :]
 
         return self._normalise_name(name)
 
