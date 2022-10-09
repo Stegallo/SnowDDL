@@ -1,10 +1,8 @@
 from re import compile
 
 from snowddl.blueprint import ObjectType
-from snowddl.converter.abc_schema_object_converter import (
-    AbstractSchemaObjectConverter,
-    ConvertResult,
-)
+from snowddl.converter.abc_converter import ConvertResult
+from snowddl.converter.abc_schema_object_converter import AbstractSchemaObjectConverter
 from snowddl.parser.table import table_json_schema
 
 cluster_by_syntax_re = compile(r"^(\w+)?\((.*)\)$")
@@ -37,11 +35,12 @@ class TableConverter(AbstractSchemaObjectConverter):
                 "name": r["name"],
                 "owner": r["owner"],
                 "is_transient": r["kind"] == "TRANSIENT",
-                "cluster_by": r["cluster_by"] if r["cluster_by"] else None,
-                "change_tracking": bool(r["change_tracking"] == "ON"),
-                "search_optimization": bool(r.get("search_optimization") == "ON"),
-                "comment": r["comment"] if r["comment"] else None,
+                "cluster_by": r["cluster_by"] or None,
+                "change_tracking": r["change_tracking"] == "ON",
+                "search_optimization": r.get("search_optimization") == "ON",
+                "comment": r["comment"] or None,
             }
+
 
         return existing_objects
 
@@ -144,8 +143,6 @@ class TableConverter(AbstractSchemaObjectConverter):
 
     def _get_unique_keys(self, row):
         constraints = {}
-        unique_keys = []
-
         cur = self.engine.execute_meta(
             "SHOW UNIQUE KEYS IN TABLE {database:i}.{schema:i}.{name:i}",
             {
@@ -161,18 +158,17 @@ class TableConverter(AbstractSchemaObjectConverter):
 
             constraints[r["constraint_name"]][r["key_sequence"]] = r["column_name"]
 
-        if not constraints:
-            return None
-
-        for uq in constraints.values():
-            unique_keys.append([self._normalise_name(uq[seq]) for seq in sorted(uq)])
-
-        return unique_keys
+        return (
+            [
+                [self._normalise_name(uq[seq]) for seq in sorted(uq)]
+                for uq in constraints.values()
+            ]
+            if constraints
+            else None
+        )
 
     def _get_foreign_keys(self, row):
         constraints = {}
-        foreign_keys = []
-
         cur = self.engine.execute_meta(
             "SHOW IMPORTED KEYS IN TABLE {database:i}.{schema:i}.{name:i}",
             {
@@ -186,7 +182,8 @@ class TableConverter(AbstractSchemaObjectConverter):
             if r["fk_name"] not in constraints:
                 constraints[r["fk_name"]] = {
                     "columns": {},
-                    "ref_table": f"{r['pk_database_name']}.{r['pk_schema_name']}.{r['pk_table_name']}",
+                    "ref_table": f"{r['pk_database_name']}.{r['pk_schema_name']}."
+                    f"{r['pk_table_name']}",
                     "ref_columns": {},
                 }
 
@@ -197,11 +194,8 @@ class TableConverter(AbstractSchemaObjectConverter):
                 "pk_column_name"
             ]
 
-        if not constraints:
-            return None
-
-        for fk in constraints.values():
-            foreign_keys.append(
+        return (
+            [
                 {
                     "columns": [
                         self._normalise_name(fk["columns"][seq])
@@ -213,6 +207,8 @@ class TableConverter(AbstractSchemaObjectConverter):
                         for seq in sorted(fk["ref_columns"])
                     ],
                 }
-            )
-
-        return foreign_keys
+                for fk in constraints.values()
+            ]
+            if constraints
+            else None
+        )

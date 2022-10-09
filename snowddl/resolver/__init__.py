@@ -9,3 +9,9 @@ default_resolver_sequence = [
     TableResolver,
     ViewResolver,
 ]
+
+singledb_resolver_sequence = [
+    SchemaResolver,
+    TableResolver,
+    ViewResolver,
+]
