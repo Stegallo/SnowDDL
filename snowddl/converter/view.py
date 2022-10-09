@@ -1,11 +1,9 @@
 from re import DOTALL, compile
 
 from snowddl.blueprint import ObjectType
-from snowddl.converter.abc_schema_object_converter import (
-    AbstractSchemaObjectConverter,
-    ConvertResult,
-    YamlLiteralStr,
-)
+from snowddl.converter._yaml import YamlLiteralStr
+from snowddl.converter.abc_converter import ConvertResult
+from snowddl.converter.abc_schema_object_converter import AbstractSchemaObjectConverter
 from snowddl.parser.view import view_json_schema
 
 view_text_re = compile(r"^.*\n\)\sas(.*)$", DOTALL)

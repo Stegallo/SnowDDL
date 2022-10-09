@@ -1,8 +1,6 @@
 from snowddl.blueprint import ObjectType
-from snowddl.converter.abc_schema_object_converter import (
-    AbstractSchemaObjectConverter,
-    ConvertResult,
-)
+from snowddl.converter.abc_converter import ConvertResult
+from snowddl.converter.abc_schema_object_converter import AbstractSchemaObjectConverter
 from snowddl.parser.sequence import sequence_json_schema
 
 

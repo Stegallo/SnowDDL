@@ -1,10 +1,8 @@
 from re import compile
 
 from snowddl.blueprint import ObjectType
-from snowddl.converter.abc_schema_object_converter import (
-    AbstractSchemaObjectConverter,
-    ConvertResult,
-)
+from snowddl.converter.abc_converter import ConvertResult
+from snowddl.converter.abc_schema_object_converter import AbstractSchemaObjectConverter
 from snowddl.parser.table import table_json_schema
 
 cluster_by_syntax_re = compile(r"^(\w+)?\((.*)\)$")
@@ -186,7 +184,8 @@ class TableConverter(AbstractSchemaObjectConverter):
             if r["fk_name"] not in constraints:
                 constraints[r["fk_name"]] = {
                     "columns": {},
-                    "ref_table": f"{r['pk_database_name']}.{r['pk_schema_name']}.{r['pk_table_name']}",
+                    "ref_table": f"{r['pk_database_name']}.{r['pk_schema_name']}."
+                    f"{r['pk_table_name']}",
                     "ref_columns": {},
                 }
 
