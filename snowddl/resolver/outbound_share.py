@@ -31,8 +31,9 @@ class OutboundShareResolver(AbstractResolver):
                 "share": full_name,
                 "database": r["database_name"],
                 "accounts": r["to"].split(",") if r["to"] else [],
-                "comment": r["comment"] if r["comment"] else None,
+                "comment": r["comment"] or None,
             }
+
 
         return existing_objects
 
@@ -171,8 +172,6 @@ class OutboundShareResolver(AbstractResolver):
         )
 
     def get_existing_share_grants(self, share_name):
-        grants = []
-
         cur = self.engine.execute_meta(
             "SHOW GRANTS TO SHARE {share_name:i}",
             {
@@ -180,15 +179,13 @@ class OutboundShareResolver(AbstractResolver):
             },
         )
 
-        for r in cur:
-            grants.append(
-                Grant(
-                    privilege=r["privilege"],
-                    on=ObjectType[r["granted_on"]],
-                    name=build_grant_name_ident_snowflake(
-                        r["name"], ObjectType[r["granted_on"]]
-                    ),
-                )
+        return [
+            Grant(
+                privilege=r["privilege"],
+                on=ObjectType[r["granted_on"]],
+                name=build_grant_name_ident_snowflake(
+                    r["name"], ObjectType[r["granted_on"]]
+                ),
             )
-
-        return grants
+            for r in cur
+        ]

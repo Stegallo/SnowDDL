@@ -22,46 +22,41 @@ class UserRoleResolver(AbstractRoleResolver):
             },
         )
 
-        for r in cur:
-            # Check ROLE grants only, ignore everything else
-            # User roles may accumulate random grants from temporary tables and stages
-            # as well as ownership of manually created objects
-            if r["granted_on"] != "ROLE":
-                continue
-
-            grants.append(
-                Grant(
-                    privilege=r["privilege"],
-                    on=ObjectType[r["granted_on"]],
-                    name=build_grant_name_ident_snowflake(
-                        r["name"], ObjectType[r["granted_on"]]
-                    ),
-                )
+        grants.extend(
+            Grant(
+                privilege=r["privilege"],
+                on=ObjectType[r["granted_on"]],
+                name=build_grant_name_ident_snowflake(
+                    r["name"], ObjectType[r["granted_on"]]
+                ),
             )
+            for r in cur
+            if r["granted_on"] == "ROLE"
+        )
 
         return role_name, grants, []
 
     def get_blueprints(self):
-        blueprints = []
+        blueprints = [
+            self.get_blueprint_user_role(user)
+            for user in self.config.get_blueprints_by_type(UserBlueprint).values()
+        ]
 
-        for user in self.config.get_blueprints_by_type(UserBlueprint).values():
-            blueprints.append(self.get_blueprint_user_role(user))
 
         return {str(bp.full_name): bp for bp in blueprints}
 
     def get_blueprint_user_role(self, user: UserBlueprint):
-        grants = []
-
-        for business_role in user.business_roles:
-            grants.append(
-                Grant(
-                    privilege="USAGE",
-                    on=ObjectType.ROLE,
-                    name=business_role,
-                )
+        grants = [
+            Grant(
+                privilege="USAGE",
+                on=ObjectType.ROLE,
+                name=business_role,
             )
+            for business_role in user.business_roles
+        ]
 
-        bp = RoleBlueprint(
+
+        return RoleBlueprint(
             full_name=build_role_ident(
                 self.config.env_prefix, user.full_name, self.get_role_suffix()
             ),
@@ -69,5 +64,3 @@ class UserRoleResolver(AbstractRoleResolver):
             future_grants=[],
             comment=None,
         )
-
-        return bp

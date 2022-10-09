@@ -10,20 +10,18 @@ class AccountParameterResolver(AbstractResolver):
         return ObjectType.ACCOUNT_PARAMETER
 
     def get_existing_objects(self):
-        existing_objects = {}
-
         cur = self.engine.execute_meta("SHOW PARAMETERS FOR ACCOUNT")
 
-        for r in cur:
-            existing_objects[r["key"]] = {
+        return {
+            r["key"]: {
                 "key": r["key"],
                 "value": r["value"],
                 "default": r["default"],
                 "level": r["level"],
                 "type": r["type"],
             }
-
-        return existing_objects
+            for r in cur
+        }
 
     def get_blueprints(self):
         return self.config.get_blueprints_by_type(AccountParameterBlueprint)

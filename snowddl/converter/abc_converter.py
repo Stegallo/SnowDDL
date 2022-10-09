@@ -53,18 +53,20 @@ class AbstractConverter(ABC):
             )
             raise e.snow_exc
 
-        tasks = {}
+        tasks = {
+            full_name: (self.dump_object, self.existing_objects[full_name])
+            for full_name in sorted(self.existing_objects)
+        }
 
-        for full_name in sorted(self.existing_objects):
-            tasks[full_name] = (self.dump_object, self.existing_objects[full_name])
 
         self._process_tasks(tasks)
 
     def _process_tasks(self, tasks):
-        futures = {}
+        futures = {
+            self.engine.executor.submit(*args): full_name
+            for full_name, args in tasks.items()
+        }
 
-        for full_name, args in tasks.items():
-            futures[self.engine.executor.submit(*args)] = full_name
 
         for f in as_completed(futures):
             full_name = futures[f]
@@ -97,7 +99,7 @@ class AbstractConverter(ABC):
             return True
 
         if self.engine.settings.include_object_types:
-            return not (self.object_type in self.engine.settings.include_object_types)
+            return self.object_type not in self.engine.settings.include_object_types
 
         return False
 

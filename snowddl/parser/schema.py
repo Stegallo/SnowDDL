@@ -48,17 +48,20 @@ class SchemaParser(AbstractParser):
                     or schema_params.get("is_sandbox", False),
                 }
 
-                owner_additional_grants = []
-
-                for full_schema_name in schema_params.get("owner_schema_read", []):
-                    owner_additional_grants.append(
-                        self.build_schema_role_grant(full_schema_name, "READ")
+                owner_additional_grants = [
+                    self.build_schema_role_grant(full_schema_name, "READ")
+                    for full_schema_name in schema_params.get(
+                        "owner_schema_read", []
                     )
+                ]
 
-                for full_schema_name in schema_params.get("owner_schema_write", []):
-                    owner_additional_grants.append(
-                        self.build_schema_role_grant(full_schema_name, "WRITE")
+
+                owner_additional_grants.extend(
+                    self.build_schema_role_grant(full_schema_name, "WRITE")
+                    for full_schema_name in schema_params.get(
+                        "owner_schema_write", []
                     )
+                )
 
                 bp = SchemaBlueprint(
                     full_name=SchemaIdent(

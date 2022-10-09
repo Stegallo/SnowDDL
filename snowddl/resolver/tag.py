@@ -29,8 +29,9 @@ class TagResolver(AbstractSchemaObjectResolver):
                 "database": r["database_name"],
                 "schema": r["schema_name"],
                 "name": r["name"],
-                "comment": r["comment"] if r["comment"] else None,
+                "comment": r["comment"] or None,
             }
+
 
         return existing_objects
 
@@ -199,9 +200,7 @@ class TagResolver(AbstractSchemaObjectResolver):
                 )
 
     def _get_existing_tag_refs(self, tag_name: SchemaObjectIdent):
-        existing_policy_refs = {}
-
         # TODO: discover a better way to get tag references in real time
         # Currently it is not clear how to get all tag references properly
 
-        return existing_policy_refs
+        return {}

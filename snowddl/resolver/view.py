@@ -26,15 +26,18 @@ class ViewResolver(AbstractSchemaObjectResolver):
             if r["is_materialized"] == "true":
                 continue
 
-            existing_objects[f"{r['database_name']}.{r['schema_name']}.{r['name']}"] = {
+            existing_objects[
+                f"{r['database_name']}.{r['schema_name']}.{r['name']}"
+            ] = {
                 "database": r["database_name"],
                 "schema": r["schema_name"],
                 "name": r["name"],
                 "owner": r["owner"],
                 "text": r["text"],
                 "is_secure": r["is_secure"] == "true",
-                "comment": r["comment"] if r["comment"] else None,
+                "comment": r["comment"] or None,
             }
+
 
         return existing_objects
 
@@ -73,20 +76,16 @@ class ViewResolver(AbstractSchemaObjectResolver):
                 # TODO: add checks for specific errors?
                 pass
             else:
-                # Comments on views are broken and must be applied separately
-                if bp.comment != row["comment"]:
-                    self.engine.execute_safe_ddl(
-                        "COMMENT ON VIEW {full_name:i} IS {comment}",
-                        {
-                            "full_name": bp.full_name,
-                            "comment": bp.comment if bp.comment else "",
-                        },
-                    )
-
-                    return ResolveResult.ALTER
-                else:
+                if bp.comment == row["comment"]:
                     return ResolveResult.NOCHANGE
 
+                self.engine.execute_safe_ddl(
+                    "COMMENT ON VIEW {full_name:i} IS {comment}",
+                    {"full_name": bp.full_name, "comment": bp.comment or ""},
+                )
+
+
+                return ResolveResult.ALTER
         # Replace view if we got here
         self.engine.execute_safe_ddl(query)
 

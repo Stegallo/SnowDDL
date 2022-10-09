@@ -12,8 +12,6 @@ class PipeResolver(AbstractSchemaObjectResolver):
         return ObjectType.PIPE
 
     def get_existing_objects_in_schema(self, schema: dict):
-        existing_objects = {}
-
         cur = self.engine.execute_meta(
             "SHOW PIPES IN SCHEMA {database:i}.{schema:i}",
             {
@@ -22,8 +20,8 @@ class PipeResolver(AbstractSchemaObjectResolver):
             },
         )
 
-        for r in cur:
-            existing_objects[f"{r['database_name']}.{r['schema_name']}.{r['name']}"] = {
+        return {
+            f"{r['database_name']}.{r['schema_name']}.{r['name']}": {
                 "database": r["database_name"],
                 "schema": r["schema_name"],
                 "name": r["name"],
@@ -32,8 +30,8 @@ class PipeResolver(AbstractSchemaObjectResolver):
                 "pattern": r["pattern"],
                 "comment": r["comment"],
             }
-
-        return existing_objects
+            for r in cur
+        }
 
     def get_blueprints(self):
         return self.config.get_blueprints_by_type(PipeBlueprint)

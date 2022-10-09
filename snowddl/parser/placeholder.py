@@ -25,13 +25,12 @@ class PlaceholderParser(AbstractParser):
         }
 
         # 2) Merge with placeholders from normal config file
-        placeholders.update(
-            self.normalise_params_dict(
-                self.parse_single_file(
-                    self.base_path / "placeholder.yaml", placeholder_json_schema
-                )
+        placeholders |= self.normalise_params_dict(
+            self.parse_single_file(
+                self.base_path / "placeholder.yaml", placeholder_json_schema
             )
         )
+
 
         # 3) Merge with placeholders from override config file
         if placeholder_path:

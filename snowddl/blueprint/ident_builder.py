@@ -76,7 +76,7 @@ def build_grant_name_ident_snowflake(grant_name, object_type: ObjectType):
             start_dtypes_idx = last_part.index("(")
             finish_dtypes_idx = last_part.index(")")
 
-            parts[-1] = last_part[0:start_dtypes_idx]
+            parts[-1] = last_part[:start_dtypes_idx]
 
             data_types_str = last_part[start_dtypes_idx + 1 : finish_dtypes_idx]
             data_types = (
