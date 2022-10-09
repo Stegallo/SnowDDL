@@ -9,7 +9,7 @@ from jsonschema import validate
 from yaml import dump_all
 
 from snowddl.blueprint import Edition, ObjectType
-from snowddl.converter._yaml import SnowDDLDumper, YamlFoldedStr, YamlLiteralStr
+from snowddl.converter._yaml import SnowDDLDumper
 from snowddl.error import SnowDDLExecuteError
 
 if TYPE_CHECKING:
@@ -49,22 +49,25 @@ class AbstractConverter(ABC):
             self.existing_objects = self.get_existing_objects()
         except SnowDDLExecuteError as e:
             self.engine.logger.info(
-                f"Could not get existing objects for converter [{self.__class__.__name__}]: \n{e.verbose_message()}"
+                "Could not get existing objects for converter "
+                f"[{self.__class__.__name__}]: \n{e.verbose_message()}"
             )
             raise e.snow_exc
 
-        tasks = {}
+        tasks = {
+            full_name: (self.dump_object, self.existing_objects[full_name])
+            for full_name in sorted(self.existing_objects)
+        }
 
-        for full_name in sorted(self.existing_objects):
-            tasks[full_name] = (self.dump_object, self.existing_objects[full_name])
 
         self._process_tasks(tasks)
 
     def _process_tasks(self, tasks):
-        futures = {}
+        futures = {
+            self.engine.executor.submit(*args): full_name
+            for full_name, args in tasks.items()
+        }
 
-        for full_name, args in tasks.items():
-            futures[self.engine.executor.submit(*args)] = full_name
 
         for f in as_completed(futures):
             full_name = futures[f]
@@ -83,7 +86,8 @@ class AbstractConverter(ABC):
                     error_text = format_exc()
 
                 self.engine.logger.warning(
-                    f"Converted {self.object_type.name} [{full_name}]: {result.value}\n{error_text}"
+                    f"Converted {self.object_type.name} [{full_name}]"
+                    f": {result.value}\n{error_text}"
                 )
                 self.errors[full_name] = e
 
@@ -97,7 +101,7 @@ class AbstractConverter(ABC):
             return True
 
         if self.engine.settings.include_object_types:
-            return not (self.object_type in self.engine.settings.include_object_types)
+            return self.object_type not in self.engine.settings.include_object_types
 
         return False
 
@@ -113,7 +117,7 @@ class AbstractConverter(ABC):
             dump_all([data], f, Dumper=SnowDDLDumper, sort_keys=False)
 
     def _normalise_name(self, name: str):
-        return name.lower()
+        return name
 
     def _normalise_name_with_prefix(self, name: str):
         if name.startswith(self.env_prefix):
