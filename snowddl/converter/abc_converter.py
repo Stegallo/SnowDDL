@@ -9,7 +9,7 @@ from jsonschema import validate
 from yaml import dump_all
 
 from snowddl.blueprint import Edition, ObjectType
-from snowddl.converter._yaml import SnowDDLDumper, YamlFoldedStr, YamlLiteralStr
+from snowddl.converter._yaml import SnowDDLDumper
 from snowddl.error import SnowDDLExecuteError
 
 if TYPE_CHECKING:
@@ -49,7 +49,8 @@ class AbstractConverter(ABC):
             self.existing_objects = self.get_existing_objects()
         except SnowDDLExecuteError as e:
             self.engine.logger.info(
-                f"Could not get existing objects for converter [{self.__class__.__name__}]: \n{e.verbose_message()}"
+                "Could not get existing objects for converter "
+                f"[{self.__class__.__name__}]: \n{e.verbose_message()}"
             )
             raise e.snow_exc
 
@@ -83,7 +84,8 @@ class AbstractConverter(ABC):
                     error_text = format_exc()
 
                 self.engine.logger.warning(
-                    f"Converted {self.object_type.name} [{full_name}]: {result.value}\n{error_text}"
+                    f"Converted {self.object_type.name} [{full_name}]"
+                    f": {result.value}\n{error_text}"
                 )
                 self.errors[full_name] = e
 
@@ -113,7 +115,7 @@ class AbstractConverter(ABC):
             dump_all([data], f, Dumper=SnowDDLDumper, sort_keys=False)
 
     def _normalise_name(self, name: str):
-        return name.lower()
+        return name
 
     def _normalise_name_with_prefix(self, name: str):
         if name.startswith(self.env_prefix):
