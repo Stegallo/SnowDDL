@@ -60,9 +60,7 @@ class ParsedFile:
 
     def _apply_placeholders_inner(self, val: str):
         if self.placeholder_start in val:
-            m = self.placeholder_re.fullmatch(val)
-
-            if m:
+            if m := self.placeholder_re.fullmatch(val):
                 # Value is a single placeholder, return and preserve type
                 return self.parser.config.get_placeholder(m.group(1).upper())
             else:

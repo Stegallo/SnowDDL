@@ -43,22 +43,21 @@ class TechRoleParser(AbstractParser):
 
                 for p in privileges.split(","):
                     for pattern in pattern_list:
-                        blueprints = self.config.get_blueprints_by_type_and_pattern(
+                        if blueprints := self.config.get_blueprints_by_type_and_pattern(
                             ObjectType[on].blueprint_cls, pattern
-                        )
-
-                        if not blueprints:
-                            raise ValueError(
-                                f"No {ObjectType[on].plural} matched wildcard grant with pattern [{pattern}]"
-                            )
-
-                        for object_bp in blueprints.values():
-                            grants.append(
+                        ):
+                            grants.extend(
                                 Grant(
                                     privilege=p,
                                     on=ObjectType[on],
                                     name=object_bp.full_name,
                                 )
+                                for object_bp in blueprints.values()
+                            )
+
+                        else:
+                            raise ValueError(
+                                f"No {ObjectType[on].plural} matched wildcard grant with pattern [{pattern}]"
                             )
 
             bp = TechRoleBlueprint(

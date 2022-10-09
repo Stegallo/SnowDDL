@@ -33,10 +33,7 @@ class SnowDDLFormatter(string.Formatter):
     def format_sql(self, sql, params=None):
         sql = str(sql)
 
-        if params:
-            return self.vformat(sql, [], params)
-
-        return sql
+        return self.vformat(sql, [], params) if params else sql
 
     def convert_field(self, value, conversion):
         if conversion is not None:
@@ -54,14 +51,13 @@ class SnowDDLFormatter(string.Formatter):
         if format_spec not in self.smart_transformations:
             raise ValueError(f"Unknown format transformation [{format_spec}]")
 
-        if isinstance(value, list) and format_spec != "dp":
-            if not value:
-                raise ValueError("Attempt to format an empty list")
-            return ", ".join(
-                [self.smart_transformations[format_spec](v) for v in value]
-            )
-        else:
+        if not isinstance(value, list) or format_spec == "dp":
             return self.smart_transformations[format_spec](value)
+        if not value:
+            raise ValueError("Attempt to format an empty list")
+        return ", ".join(
+            [self.smart_transformations[format_spec](v) for v in value]
+        )
 
     @classmethod
     def escape(cls, val):
@@ -69,12 +65,10 @@ class SnowDDLFormatter(string.Formatter):
 
     @classmethod
     def escape_ident(cls, val):
-        val = str(val)
-
-        if not val:
+        if val := str(val):
+            return val.replace('"', '""')
+        else:
             raise ValueError("Identifier cannot be empty")
-
-        return val.replace('"', '""')
 
     @classmethod
     def escape_like(cls, val):
@@ -82,10 +76,7 @@ class SnowDDLFormatter(string.Formatter):
 
     @classmethod
     def quote(cls, val):
-        if val is None:
-            return "NULL"
-
-        return f"'{cls.escape(val)}'"
+        return "NULL" if val is None else f"'{cls.escape(val)}'"
 
     @classmethod
     def quote_ident(cls, val):

@@ -100,26 +100,27 @@ class ExternalTableParser(AbstractParser):
         column_blueprints = []
 
         for col_name, col in f.params["columns"].items():
-            m = col_type_re.match(col["type"])
+            if m := col_type_re.match(col["type"]):
+                column_blueprints.append(
+                    ExternalTableColumn(
+                        name=Ident(col_name),
+                        type=DataType(m.group("type")),
+                        expr=col["expr"],
+                        not_null=bool(m.group("not_null")),
+                        comment=col.get("comment"),
+                    )
+                )
 
-            if not m:
+            else:
                 raise ValueError(
                     f"Incorrect short syntax for column [{col_name}] in table [{f.database}.{f.schema}.{f.name}]: {col['type']}"
                 )
 
-            column_blueprints.append(
-                ExternalTableColumn(
-                    name=Ident(col_name),
-                    type=DataType(m.group("type")),
-                    expr=col["expr"],
-                    not_null=bool(m.group("not_null")),
-                    comment=col.get("comment"),
-                )
-            )
-
         bp = ExternalTableBlueprint(
-            full_name=SchemaObjectIdent(self.env_prefix, f.database, f.schema, f.name),
-            columns=column_blueprints if column_blueprints else None,
+            full_name=SchemaObjectIdent(
+                self.env_prefix, f.database, f.schema, f.name
+            ),
+            columns=column_blueprints or None,
             partition_by=[Ident(col_name) for col_name in f.params["partition_by"]]
             if f.params.get("partition_by")
             else None,
@@ -127,7 +128,10 @@ class ExternalTableParser(AbstractParser):
             if f.params.get("partition_type")
             else None,
             location_stage=build_schema_object_ident(
-                self.env_prefix, f.params["location"]["stage"], f.database, f.schema
+                self.env_prefix,
+                f.params["location"]["stage"],
+                f.database,
+                f.schema,
             ),
             location_path=f.params["location"].get("path"),
             location_pattern=f.params["location"].get("pattern"),
@@ -150,6 +154,7 @@ class ExternalTableParser(AbstractParser):
             else None,
             comment=f.params.get("comment"),
         )
+
 
         self.config.add_blueprint(bp)
 

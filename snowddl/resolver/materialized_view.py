@@ -13,8 +13,6 @@ class MaterializedViewResolver(AbstractSchemaObjectResolver):
         return ObjectType.MATERIALIZED_VIEW
 
     def get_existing_objects_in_schema(self, schema: dict):
-        existing_objects = {}
-
         cur = self.engine.execute_meta(
             "SHOW MATERIALIZED VIEWS IN SCHEMA {database:i}.{schema:i}",
             {
@@ -23,20 +21,20 @@ class MaterializedViewResolver(AbstractSchemaObjectResolver):
             },
         )
 
-        for r in cur:
-            existing_objects[f"{r['database_name']}.{r['schema_name']}.{r['name']}"] = {
+        return {
+            f"{r['database_name']}.{r['schema_name']}.{r['name']}": {
                 "database": r["database_name"],
                 "schema": r["schema_name"],
                 "name": r["name"],
                 "owner": r["owner"],
                 "text": r["text"],
                 "is_secure": r["is_secure"] == "true",
-                "cluster_by": r["cluster_by"] if r["cluster_by"] else None,
+                "cluster_by": r["cluster_by"] or None,
                 "invalid": r["invalid"] == "true",
                 "invalid_reason": r["invalid_reason"],
             }
-
-        return existing_objects
+            for r in cur
+        }
 
     def get_blueprints(self):
         return self.config.get_blueprints_by_type(MaterializedViewBlueprint)

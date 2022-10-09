@@ -17,7 +17,7 @@ class AbstractSchemaObjectConverter(AbstractConverter, ABC):
             self.get_existing_objects_in_schema,
             self.engine.schema_cache.schemas.values(),
         ):
-            existing_objects.update(schema_objects)
+            existing_objects |= schema_objects
 
         return existing_objects
 

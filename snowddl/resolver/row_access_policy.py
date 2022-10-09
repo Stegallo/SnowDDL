@@ -37,8 +37,9 @@ class RowAccessPolicyResolver(AbstractSchemaObjectResolver):
                 "database": r["database_name"],
                 "schema": r["schema_name"],
                 "name": r["name"],
-                "comment": r["comment"] if r["comment"] else None,
+                "comment": r["comment"] or None,
             }
+
 
         return existing_objects
 

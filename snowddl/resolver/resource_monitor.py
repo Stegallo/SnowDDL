@@ -16,7 +16,7 @@ class ResourceMonitorResolver(AbstractResolver):
         for r in cur:
             triggers = {}
 
-            triggers.update(self._parse_triggers(r["notify_at"], "NOTIFY"))
+            triggers |= self._parse_triggers(r["notify_at"], "NOTIFY")
             triggers.update(self._parse_triggers(r["suspend_at"], "SUSPEND"))
             triggers.update(
                 self._parse_triggers(r["suspend_immediately_at"], "SUSPEND_IMMEDIATE")
@@ -30,8 +30,9 @@ class ResourceMonitorResolver(AbstractResolver):
                 "suspend_at": r["suspend_at"],
                 "suspend_immediately_at": r["suspend_immediately_at"],
                 "triggers": triggers,
-                "comment": r["comment"] if r["comment"] else None,
+                "comment": r["comment"] or None,
             }
+
 
         return existing_objects
 

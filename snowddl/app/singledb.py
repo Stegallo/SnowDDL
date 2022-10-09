@@ -214,12 +214,13 @@ class SingleDbApp(BaseApp):
                 raise ValueError(
                     f"Source database [{self.config_db}] does not exist in config"
                 )
-        else:
-            if len(config.get_blueprints_by_type(DatabaseBlueprint)) > 1:
-                raise ValueError(
-                    f"More than one source database exist in config, please choose a specific database using --source-db argument"
-                )
+        elif len(config.get_blueprints_by_type(DatabaseBlueprint)) > 1:
+            raise ValueError(
+                "More than one source database exist in config, please choose a specific database using --source-db argument"
+            )
 
+
+        else:
             self.config_db = next(
                 iter(config.get_blueprints_by_type(DatabaseBlueprint).values())
             ).full_name

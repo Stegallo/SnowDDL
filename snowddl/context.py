@@ -45,11 +45,13 @@ class SnowDDLContext:
         self._validate()
 
     def _validate(self):
-        if not self.current_warehouse:
-            if self.engine.settings.execute_replace_table:
-                raise ValueError(
-                    "Context error: missing CURRENT_WAREHOUSE in session to apply REPLACE TABLE"
-                )
+        if (
+            not self.current_warehouse
+            and self.engine.settings.execute_replace_table
+        ):
+            raise ValueError(
+                "Context error: missing CURRENT_WAREHOUSE in session to apply REPLACE TABLE"
+            )
 
         if not self.is_account_admin:
             if self.engine.settings.execute_account_params:

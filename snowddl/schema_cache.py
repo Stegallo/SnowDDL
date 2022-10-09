@@ -48,10 +48,11 @@ class SnowDDLSchemaCache:
             self.databases[r["name"]] = {
                 "database": r["name"],
                 "owner": r["owner"],
-                "comment": r["comment"] if r["comment"] else None,
+                "comment": r["comment"] or None,
                 "is_transient": "TRANSIENT" in r["options"],
                 "retention_time": int(r["retention_time"]),
             }
+
 
         # Process schemas in parallel
         for database_schemas in self.engine.executor.map(
@@ -85,12 +86,13 @@ class SnowDDLSchemaCache:
                 "database": r["database_name"],
                 "schema": r["name"],
                 "owner": r["owner"],
-                "comment": r["comment"] if r["comment"] else None,
+                "comment": r["comment"] or None,
                 "is_transient": "TRANSIENT" in r["options"],
                 "is_managed_access": "MANAGED ACCESS" in r["options"],
                 "retention_time": int(r["retention_time"])
                 if r["retention_time"].isdigit()
                 else 0,
             }
+
 
         return schemas
