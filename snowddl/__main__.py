@@ -13,8 +13,8 @@ def main():
         "action": "plan",
     }
     c = Configuration(**config)
-    BaseApp(c)
-    # app.execute()
+    app = BaseApp(c)
+    app.execute()
 
 
 if __name__ == "__main__":

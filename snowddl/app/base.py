@@ -111,13 +111,13 @@ class BaseApp:
         config_path = Path(self.args.path)
 
         if not config_path.exists():
-            config_path = Path(__file__).parent.parent / "_config" / self.args["c"]
+            config_path = Path(__file__).parent.parent / "_config" / self.args.path
 
         if not config_path.exists():
-            raise ValueError(f"Config path [{self.args['c']}] does not exist")
+            raise ValueError(f"Config path [{self.args.path}] does not exist")
 
         if not config_path.is_dir():
-            raise ValueError(f"Config path [{self.args['c']}] is not a directory")
+            raise ValueError(f"Config path [{self.args.path}] is not a directory")
 
         return config_path.resolve()
 
