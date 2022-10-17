@@ -304,22 +304,21 @@ class BaseApp:
         return None
 
     def get_placeholder_values(self):
-        if self.args.get('placeholder_values'):
-            try:
-                placeholder_values = json_loads(self.args.get('placeholder_values'))
-            except JSONDecodeError as e:
-                raise ValueError(f"Placeholder values [{self.args.get('placeholder_values')}] are not a valid JSON")
+        if not self.args.get('placeholder_values'):
+            return None
+        try:
+            placeholder_values = json_loads(self.args.get('placeholder_values'))
+        except JSONDecodeError as e:
+            raise ValueError(f"Placeholder values [{self.args.get('placeholder_values')}] are not a valid JSON")
 
-            if not isinstance(placeholder_values, dict):
-                raise ValueError(f"Placeholder values [{self.args.get('placeholder_values')}] are not JSON encoded dict")
+        if not isinstance(placeholder_values, dict):
+            raise ValueError(f"Placeholder values [{self.args.get('placeholder_values')}] are not JSON encoded dict")
 
-            for k, v in placeholder_values.items():
-                if not isinstance(v, (bool, float, int, str)):
-                    raise ValueError(f"Invalid type [{type(v)}] of placeholder [{k.upper()}] value, supported types are: bool, float, int, str")
+        for k, v in placeholder_values.items():
+            if not isinstance(v, (bool, float, int, str)):
+                raise ValueError(f"Invalid type [{type(v)}] of placeholder [{k.upper()}] value, supported types are: bool, float, int, str")
 
-            return placeholder_values
-
-        return None
+        return placeholder_values
 
     def output_config_errors(self, config):
         for e in config.errors:

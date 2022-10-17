@@ -21,9 +21,8 @@ def compare_dynamic_param_value(bp_value: Union[bool,int,float,str], existing_va
         if bp_value == float(existing_value):
             return True
 
-    else:
-        if str(bp_value) == existing_value:
-            return True
+    elif str(bp_value) == existing_value:
+        return True
 
     return False
 

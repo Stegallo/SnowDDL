@@ -9,7 +9,7 @@ class AbstractSchemaObjectConverter(AbstractConverter, ABC):
 
         # Process schemas in parallel
         for schema_objects in self.engine.executor.map(self.get_existing_objects_in_schema, self.engine.schema_cache.schemas.values()):
-            existing_objects.update(schema_objects)
+            existing_objects |= schema_objects
 
         return existing_objects
 

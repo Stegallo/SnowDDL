@@ -7,25 +7,23 @@ class SequenceResolver(AbstractSchemaObjectResolver):
         return ObjectType.SEQUENCE
 
     def get_existing_objects_in_schema(self, schema: dict):
-        existing_objects = {}
-
         cur = self.engine.execute_meta("SHOW SEQUENCES IN SCHEMA {database:i}.{schema:i}", {
             "database": schema['database'],
             "schema": schema['schema'],
         })
 
-        for r in cur:
-            existing_objects[f"{r['database_name']}.{r['schema_name']}.{r['name']}"] = {
+        return {
+            f"{r['database_name']}.{r['schema_name']}.{r['name']}": {
                 "database": r['database_name'],
                 "schema": r['schema_name'],
                 "name": r['name'],
                 "owner": r['owner'],
                 "next_value": r['next_value'],
                 "interval": r['interval'],
-                "comment": r['comment'] if r['comment'] else None,
+                "comment": r['comment'] or None,
             }
-
-        return existing_objects
+            for r in cur
+        }
 
     def get_blueprints(self):
         return self.config.get_blueprints_by_type(SequenceBlueprint)

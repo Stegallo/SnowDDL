@@ -29,8 +29,9 @@ class ExternalTableResolver(AbstractSchemaObjectResolver):
                 "file_format_name": r['file_format_name'],
                 "file_format_type": r['file_format_type'],
                 "notification_channel": r['notification_channel'],
-                "comment": r['comment'] if r['comment'] else None,
+                "comment": r['comment'] or None,
             }
+
 
         return existing_objects
 

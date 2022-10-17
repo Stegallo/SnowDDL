@@ -73,40 +73,46 @@ class AbstractResolver(ABC):
     def _resolve_create_compare(self):
         # Process blueprints in batches sorted in order of dependencies
         for blueprint_names_batch in self._split_blueprints_into_batches():
-            tasks = {}
+            tasks = {
+                full_name: (
+                    self.compare_object,
+                    self.blueprints[full_name],
+                    self.existing_objects[full_name],
+                )
+                if full_name in self.existing_objects
+                else (self.create_object, self.blueprints[full_name])
+                for full_name in sorted(blueprint_names_batch)
+            }
 
-            for full_name in sorted(blueprint_names_batch):
-                if full_name in self.existing_objects:
-                    tasks[full_name] = (self.compare_object, self.blueprints[full_name], self.existing_objects[full_name])
-                else:
-                    tasks[full_name] = (self.create_object, self.blueprints[full_name])
 
             self._process_tasks(tasks)
 
     def _resolve_drop(self):
         # Drop existing objects without blueprints
-        tasks = {}
+        tasks = {
+            full_name: (self.drop_object, self.existing_objects[full_name])
+            for full_name in sorted(self.existing_objects)
+            if full_name not in self.blueprints
+        }
 
-        for full_name in sorted(self.existing_objects):
-            if full_name not in self.blueprints:
-                tasks[full_name] = (self.drop_object, self.existing_objects[full_name])
 
         self._process_tasks(tasks)
 
     def _destroy_drop(self):
-        tasks = {}
+        tasks = {
+            full_name: (self.drop_object, self.existing_objects[full_name])
+            for full_name in sorted(self.existing_objects)
+        }
 
-        # Drop all existing objects
-        for full_name in sorted(self.existing_objects):
-            tasks[full_name] = (self.drop_object, self.existing_objects[full_name])
 
         self._process_tasks(tasks)
 
     def _process_tasks(self, tasks):
-        futures = {}
+        futures = {
+            self.engine.executor.submit(*args): full_name
+            for full_name, args in tasks.items()
+        }
 
-        for full_name, args in tasks.items():
-            futures[self.engine.executor.submit(*args)] = full_name
 
         for f in as_completed(futures):
             full_name = futures[f]
@@ -143,20 +149,18 @@ class AbstractResolver(ABC):
 
         # Create new batches as long as at least one unallocated blueprint remains
         while remaining_blueprints:
-            batch = []
+            batch = [
+                full_name
+                for full_name, bp in remaining_blueprints.items()
+                if not isinstance(bp, DependsOnMixin)
+                or not bp.depends_on
+                or all((str(d) in allocated_full_names) for d in bp.depends_on)
+            ]
 
-            # Allocate blueprints with no dependencies or fully resolved dependencies
-            for full_name, bp in remaining_blueprints.items():
-                if not isinstance(bp, DependsOnMixin) \
-                or not bp.depends_on \
-                or all((str(d) in allocated_full_names) for d in bp.depends_on):
-                    batch.append(full_name)
 
             # Allocate blueprints with unresolved dependencies to the last batch
-            if len(batch) == 0:
-                for full_name in remaining_blueprints:
-                    batch.append(full_name)
-
+            if not batch:
+                batch.extend(iter(remaining_blueprints))
             # Forget blueprints allocated during this iteration
             for full_name in batch:
                 del remaining_blueprints[full_name]
@@ -174,12 +178,9 @@ class AbstractResolver(ABC):
             return True
 
         if self.engine.settings.include_object_types:
-            return not (self.object_type in self.engine.settings.include_object_types)
+            return self.object_type not in self.engine.settings.include_object_types
 
-        if self.skip_on_empty_blueprints and not self.get_blueprints():
-            return True
-
-        return False
+        return bool(self.skip_on_empty_blueprints and not self.get_blueprints())
 
     def _pre_process(self):
         pass

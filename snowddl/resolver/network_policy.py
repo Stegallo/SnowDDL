@@ -9,19 +9,17 @@ class NetworkPolicyResolver(AbstractResolver):
         return ObjectType.NETWORK_POLICY
 
     def get_existing_objects(self):
-        existing_objects = {}
-
         cur = self.engine.execute_meta("SHOW NETWORK POLICIES")
 
-        for r in cur:
-            existing_objects[r['name']] = {
+        return {
+            r['name']: {
                 "name": r['name'],
                 "entries_in_allowed_ip_list": r['entries_in_allowed_ip_list'],
                 "entries_in_blocked_ip_list": r['entries_in_blocked_ip_list'],
-                "comment": r['comment'] if r['comment'] else None,
+                "comment": r['comment'] or None,
             }
-
-        return existing_objects
+            for r in cur
+        }
 
     def get_blueprints(self):
         return self.config.get_blueprints_by_type(NetworkPolicyBlueprint)
@@ -89,10 +87,12 @@ class NetworkPolicyResolver(AbstractResolver):
             result = ResolveResult.ALTER
 
         if bp.comment != row['comment']:
-            self.engine.execute_unsafe_ddl("ALTER NETWORK POLICY {name:i} SET COMMENT = {comment}", {
-                "name": bp.full_name,
-                "comment": bp.comment if bp.comment else None,
-            }, condition=self.engine.settings.execute_network_policy)
+            self.engine.execute_unsafe_ddl(
+                "ALTER NETWORK POLICY {name:i} SET COMMENT = {comment}",
+                {"name": bp.full_name, "comment": bp.comment or None},
+                condition=self.engine.settings.execute_network_policy,
+            )
+
 
             result = ResolveResult.ALTER
 

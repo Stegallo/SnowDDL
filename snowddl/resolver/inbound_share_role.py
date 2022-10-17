@@ -33,21 +33,25 @@ class InboundShareRoleResolver(AbstractRoleResolver):
         return role_name, grants, []
 
     def get_blueprints(self):
-        blueprints = []
+        blueprints = [
+            self.get_blueprint_inbound_share_role(user)
+            for user in self.config.get_blueprints_by_type(
+                DatabaseShareBlueprint
+            ).values()
+        ]
 
-        for user in self.config.get_blueprints_by_type(DatabaseShareBlueprint).values():
-            blueprints.append(self.get_blueprint_inbound_share_role(user))
 
         return {str(bp.full_name): bp for bp in blueprints}
 
     def get_blueprint_inbound_share_role(self, bp: DatabaseShareBlueprint):
-        grants = []
+        grants = [
+            Grant(
+                privilege="IMPORTED PRIVILEGES",
+                on=ObjectType.DATABASE,
+                name=bp.full_name,
+            )
+        ]
 
-        grants.append(Grant(
-            privilege="IMPORTED PRIVILEGES",
-            on=ObjectType.DATABASE,
-            name=bp.full_name,
-        ))
 
         return RoleBlueprint(
             full_name=build_role_ident(self.config.env_prefix, bp.full_name.database, self.get_role_suffix()),

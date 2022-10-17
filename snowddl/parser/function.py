@@ -104,11 +104,7 @@ class FunctionParser(AbstractParser):
         else:
             imports = None
 
-        if f.params.get('packages'):
-            packages = f.params.get('packages')
-        else:
-            packages = None
-
+        packages = f.params.get('packages') or None
         base_name = self.validate_name_with_args(f.path, arguments)
 
         bp = FunctionBlueprint(

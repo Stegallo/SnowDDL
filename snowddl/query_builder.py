@@ -21,19 +21,13 @@ class SnowDDLQueryBuilder:
         self.fragments.append([sql])
 
     def fragment_count(self):
-        return sum([len(f) for f in self.fragments])
+        return sum(len(f) for f in self.fragments)
 
     def add_short_hash(self, comment):
-        if comment:
-            return f"{comment} {self._short_hash()}"
-
-        return self._short_hash()
+        return f"{comment} {self._short_hash()}" if comment else self._short_hash()
 
     def compare_short_hash(self, comment):
-        if comment is None:
-            return False
-
-        return str(comment).endswith(self._short_hash())
+        return False if comment is None else str(comment).endswith(self._short_hash())
 
     def _short_hash(self):
         sha1_digest = sha1(str(self).encode('UTF-8')).digest()

@@ -58,18 +58,29 @@ class TaskParser(AbstractParser):
             tasks_after = None
 
         bp = TaskBlueprint(
-            full_name=SchemaObjectIdent(self.env_prefix, f.database, f.schema, f.name),
+            full_name=SchemaObjectIdent(
+                self.env_prefix, f.database, f.schema, f.name
+            ),
             body=f.params['body'],
             schedule=f.params.get('schedule'),
             after=tasks_after,
-            depends_on=tasks_after if tasks_after else [],
+            depends_on=tasks_after or [],
             when=f.params.get('when'),
-            warehouse=AccountObjectIdent(self.env_prefix, f.params['warehouse']) if f.params.get('warehouse') else None,
-            user_task_managed_initial_warehouse_size=f.params.get('user_task_managed_initial_warehouse_size'),
-            allow_overlapping_execution=f.params.get('allow_overlapping_execution'),
-            session_params=self.normalise_params_dict(f.params.get('session_params')),
+            warehouse=AccountObjectIdent(self.env_prefix, f.params['warehouse'])
+            if f.params.get('warehouse')
+            else None,
+            user_task_managed_initial_warehouse_size=f.params.get(
+                'user_task_managed_initial_warehouse_size'
+            ),
+            allow_overlapping_execution=f.params.get(
+                'allow_overlapping_execution'
+            ),
+            session_params=self.normalise_params_dict(
+                f.params.get('session_params')
+            ),
             user_task_timeout_ms=f.params.get('user_task_timeout_ms'),
             comment=f.params.get('comment'),
         )
+
 
         self.config.add_blueprint(bp)

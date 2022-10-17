@@ -21,19 +21,20 @@ class UserResolver(AbstractResolver):
 
             existing_objects[r['name']] = {
                 "name": r['name'],
-                "login_name": r['login_name'] if r['login_name'] else None,
-                "display_name": r['display_name'] if r['display_name'] else None,
-                "first_name": r['first_name'] if r['first_name'] else None,
-                "last_name": r['last_name'] if r['last_name'] else None,
-                "email": r['email'] if r['email'] else None,
+                "login_name": r['login_name'] or None,
+                "display_name": r['display_name'] or None,
+                "first_name": r['first_name'] or None,
+                "last_name": r['last_name'] or None,
+                "email": r['email'] or None,
                 "disabled": r['disabled'] == 'true',
-                "default_warehouse": r['default_warehouse'] if r['default_warehouse'] else None,
-                "default_namespace": r['default_namespace'] if r['default_namespace'] else None,
-                "default_role": r['default_role'] if r['default_role'] else None,
+                "default_warehouse": r['default_warehouse'] or None,
+                "default_namespace": r['default_namespace'] or None,
+                "default_role": r['default_role'] or None,
                 "has_password": r['has_password'] == 'true',
                 "has_rsa_public_key": r['has_rsa_public_key'] == 'true',
-                "comment": r['comment'] if r['comment'] else None,
+                "comment": r['comment'] or None,
             }
+
 
         return existing_objects
 
@@ -175,7 +176,7 @@ class UserResolver(AbstractResolver):
                 existing_public_key_2 = r['value']
 
         if bp.rsa_public_key == existing_public_key \
-        and bp.rsa_public_key_2 == existing_public_key_2:
+            and bp.rsa_public_key_2 == existing_public_key_2:
             return False
 
         self.engine.execute_safe_ddl("ALTER USER {name:i} SET rsa_public_key = {rsa_public_key}, rsa_public_key_2={rsa_public_key_2}", {
@@ -269,13 +270,8 @@ class UserResolver(AbstractResolver):
         return build_role_ident(self.config.env_prefix, bp.full_name, self.config.USER_ROLE_SUFFIX)
 
     def _get_existing_user_parameters(self, bp: UserBlueprint):
-        existing_params = {}
-
         cur = self.engine.execute_meta("SHOW PARAMETERS IN USER {name:i}", {
             "name": bp.full_name,
         })
 
-        for r in cur:
-            existing_params[r['key']] = r
-
-        return existing_params
+        return {r['key']: r for r in cur}

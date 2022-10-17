@@ -16,10 +16,10 @@ class SnowDDLExecuteError(Exception):
         }
 
         pad_length = max(len(x) for x in params)
-        res = ''
+        res = ''.join(
+            f"    {k.ljust(pad_length)}  =>  {v}\n" for k, v in params.items()
+        )
 
-        for k in params:
-            res += f"    {k.ljust(pad_length)}  =>  {params[k]}\n"
 
         return '(\n' + res + ')'
 

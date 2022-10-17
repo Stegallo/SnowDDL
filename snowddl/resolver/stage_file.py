@@ -92,7 +92,10 @@ class StageFileResolver(AbstractResolver):
     def _upload_md5_marker(self, bp: StageFileBlueprint):
         # Placeholder path for PUT command, directory does not matter
         # Actual contents of marker pseudo-file is empty and come from zero-length BytesIO in file_stream
-        md5_marker_path = Path(bp.local_path).name + f".{self._md5_file(bp.local_path)}.md5"
+        md5_marker_path = (
+            f"{Path(bp.local_path).name}.{self._md5_file(bp.local_path)}.md5"
+        )
+
 
         self.engine.execute_safe_ddl("PUT {local_path} @{stage_name:i}{stage_target:r} PARALLEL=1 OVERWRITE=TRUE AUTO_COMPRESS=FALSE", {
             "local_path": f"file://{md5_marker_path}",

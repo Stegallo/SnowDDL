@@ -25,8 +25,9 @@ class AbstractRoleResolver(AbstractResolver):
 
             existing_roles[r['name']] = {
                 "role_name": r['name'],
-                "comment": r['comment'] if r['comment'] else None,
+                "comment": r['comment'] or None,
             }
+
 
         # Process role grants in parallel
         for role_name, grants, future_grants in self.engine.executor.map(self.get_existing_role_grants, existing_roles):
@@ -37,33 +38,37 @@ class AbstractRoleResolver(AbstractResolver):
 
     def get_existing_role_grants(self, role_name):
         grants = []
-        future_grants = []
-
         cur = self.engine.execute_meta("SHOW GRANTS TO ROLE {role_name:i}", {
             "role_name": role_name,
         })
 
-        for r in cur:
-            # Snowflake bug: phantom MATERIALIZED VIEW when SEARCH OPTIMIZATION is enabled for table
-            if ObjectType[r['granted_on']] == ObjectType.MATERIALIZED_VIEW and str(r['name']).endswith('IDX_MV_"'):
-                continue
-
-            grants.append(Grant(
+        grants.extend(
+            Grant(
                 privilege=r['privilege'],
                 on=ObjectType[r['granted_on']],
-                name=build_grant_name_ident_snowflake(r['name'], ObjectType[r['granted_on']]),
-            ))
+                name=build_grant_name_ident_snowflake(
+                    r['name'], ObjectType[r['granted_on']]
+                ),
+            )
+            for r in cur
+            if ObjectType[r['granted_on']] != ObjectType.MATERIALIZED_VIEW
+            or not str(r['name']).endswith('IDX_MV_"')
+        )
 
         cur = self.engine.execute_meta("SHOW FUTURE GRANTS TO ROLE {role_name:i}", {
             "role_name": role_name,
         })
 
-        for r in cur:
-            future_grants.append(FutureGrant(
+        future_grants = [
+            FutureGrant(
                 privilege=r['privilege'],
                 on=ObjectType[r['grant_on']],
-                name=build_grant_name_ident_snowflake(r['name'], ObjectType[r['grant_on']]),
-            ))
+                name=build_grant_name_ident_snowflake(
+                    r['name'], ObjectType[r['grant_on']]
+                ),
+            )
+            for r in cur
+        ]
 
         return role_name, grants, future_grants
 
@@ -197,13 +202,16 @@ class AbstractRoleResolver(AbstractResolver):
         })
 
     def grant_to_future_grant(self, grant: Grant):
-        if not grant.on.is_future_grant_supported:
-            return None
-
-        future_grant = FutureGrant(
-            privilege=grant.privilege,
-            on=grant.on,
-            name=SchemaIdent(grant.name.env_prefix, grant.name.database, grant.name.schema) if isinstance(grant.name, SchemaObjectIdent) else grant.name
+        return (
+            FutureGrant(
+                privilege=grant.privilege,
+                on=grant.on,
+                name=SchemaIdent(
+                    grant.name.env_prefix, grant.name.database, grant.name.schema
+                )
+                if isinstance(grant.name, SchemaObjectIdent)
+                else grant.name,
+            )
+            if grant.on.is_future_grant_supported
+            else None
         )
-
-        return future_grant

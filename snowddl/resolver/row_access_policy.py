@@ -26,8 +26,9 @@ class RowAccessPolicyResolver(AbstractSchemaObjectResolver):
                 "database": r['database_name'],
                 "schema": r['schema_name'],
                 "name": r['name'],
-                "comment": r['comment'] if r['comment'] else None,
+                "comment": r['comment'] or None,
             }
+
 
         return existing_objects
 
@@ -189,8 +190,8 @@ class RowAccessPolicyResolver(AbstractSchemaObjectResolver):
 
         for r in cur:
             ref_key = f"{r['REF_ENTITY_DOMAIN']}" \
-                      f"|{r['REF_DATABASE_NAME']}.{r['REF_SCHEMA_NAME']}.{r['REF_ENTITY_NAME']}" \
-                      f"|{r['POLICY_DB']}.{r['POLICY_SCHEMA']}.{r['POLICY_NAME']}"
+                          f"|{r['REF_DATABASE_NAME']}.{r['REF_SCHEMA_NAME']}.{r['REF_ENTITY_NAME']}" \
+                          f"|{r['POLICY_DB']}.{r['POLICY_SCHEMA']}.{r['POLICY_NAME']}"
 
             existing_policy_refs[ref_key] = {
                 "object_type": r['REF_ENTITY_DOMAIN'],

@@ -23,15 +23,18 @@ class ViewConverter(AbstractSchemaObjectConverter):
             if r['is_materialized'] == 'true':
                 continue
 
-            existing_objects[f"{r['database_name']}.{r['schema_name']}.{r['name']}"] = {
+            existing_objects[
+                f"{r['database_name']}.{r['schema_name']}.{r['name']}"
+            ] = {
                 "database": r['database_name'],
                 "schema": r['schema_name'],
                 "name": r['name'],
                 "owner": r['owner'],
                 "text": r['text'],
                 "is_secure": r['is_secure'] == "true",
-                "comment": r['comment'] if r['comment'] else None,
+                "comment": r['comment'] or None,
             }
+
 
         return existing_objects
 
@@ -52,18 +55,13 @@ class ViewConverter(AbstractSchemaObjectConverter):
         return ConvertResult.EMPTY
 
     def _get_columns(self, row):
-        cols = {}
-
         cur = self.engine.execute_meta("DESC VIEW {database:i}.{schema:i}.{name:i}", {
             "database": row['database'],
             "schema": row['schema'],
             "name": row['name'],
         })
 
-        for c in cur:
-            cols[self._normalise_name(c['name'])] = c['comment'] if c['comment'] else None
-
-        return cols
+        return {self._normalise_name(c['name']): c['comment'] or None for c in cur}
 
     def _get_text(self, row):
         # TODO: replace with better implementation when available

@@ -33,9 +33,10 @@ class SnowDDLConfig:
 
         # Add env prefix to pattern IF blueprint supports it
         for f in fields(cls):
-            if f.name == 'full_name':
-                if issubclass(f.type, AbstractIdentWithPrefix):
-                    pattern = f"{self.env_prefix}{pattern}"
+            if f.name == 'full_name' and issubclass(
+                f.type, AbstractIdentWithPrefix
+            ):
+                pattern = f"{self.env_prefix}{pattern}"
 
             break
 

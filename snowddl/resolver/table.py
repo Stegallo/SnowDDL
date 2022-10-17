@@ -32,11 +32,12 @@ class TableResolver(AbstractSchemaObjectResolver):
                 "name": r['name'],
                 "owner": r['owner'],
                 "is_transient": r['kind'] == 'TRANSIENT',
-                "cluster_by": r['cluster_by'] if r['cluster_by'] else None,
-                "change_tracking": bool(r['change_tracking'] == 'ON'),
-                "search_optimization": bool(r.get('search_optimization') == 'ON'),
-                "comment": r['comment'] if r['comment'] else None,
+                "cluster_by": r['cluster_by'] or None,
+                "change_tracking": r['change_tracking'] == 'ON',
+                "search_optimization": r.get('search_optimization') == 'ON',
+                "comment": r['comment'] or None,
             }
+
 
         return existing_objects
 
@@ -97,7 +98,7 @@ class TableResolver(AbstractSchemaObjectResolver):
 
                 # Switch to another sequence is supported
                 elif isinstance(snow_c.default, str) and snow_c.default.upper().endswith('.NEXTVAL') \
-                and isinstance(bp_c_default_value, str) and bp_c_default_value.upper().endswith('.NEXTVAL'):
+                    and isinstance(bp_c_default_value, str) and bp_c_default_value.upper().endswith('.NEXTVAL'):
                     alters.append(self.engine.format("MODIFY COLUMN {col_name:i} SET DEFAULT {default:r}", {
                         "col_name": col_name,
                         "default": bp_c_default_value,
@@ -118,10 +119,13 @@ class TableResolver(AbstractSchemaObjectResolver):
             # Comments
             if snow_c.comment != bp_c.comment:
                 # UNSET COMMENT is currently not supported for columns, we can only set it to empty string
-                alters.append(self.engine.format("MODIFY COLUMN {col_name:i} COMMENT {comment}", {
-                    "col_name": col_name,
-                    "comment": bp_c.comment if bp_c.comment else '',
-                }))
+                alters.append(
+                    self.engine.format(
+                        "MODIFY COLUMN {col_name:i} COMMENT {comment}",
+                        {"col_name": col_name, "comment": bp_c.comment or ''},
+                    )
+                )
+
 
             # If type matches exactly, skip all other checks
             if snow_c.type == bp_c.type:
@@ -132,8 +136,8 @@ class TableResolver(AbstractSchemaObjectResolver):
             if snow_c.type.base_type == bp_c.type.base_type:
                 # Increase or decrease precision of NUMBER, but not scale
                 if snow_c.type.base_type == BaseDataType.NUMBER \
-                and snow_c.type.val1 != bp_c.type.val2 \
-                and snow_c.type.val2 == bp_c.type.val2:
+                    and snow_c.type.val1 != bp_c.type.val2 \
+                    and snow_c.type.val2 == bp_c.type.val2:
                     alters.append(self.engine.format("MODIFY COLUMN {col_name:i} TYPE {col_type:r}", {
                         "col_name": col_name,
                         "col_type": bp_c.type,
@@ -142,7 +146,7 @@ class TableResolver(AbstractSchemaObjectResolver):
                     continue
 
                 if snow_c.type.base_type == BaseDataType.VARCHAR \
-                and snow_c.type.val1 < bp_c.type.val1:
+                    and snow_c.type.val1 < bp_c.type.val1:
                     alters.append(self.engine.format("MODIFY COLUMN {col_name:i} TYPE {col_type:r}", {
                         "col_name": col_name,
                         "col_type": bp_c.type,
@@ -257,9 +261,7 @@ class TableResolver(AbstractSchemaObjectResolver):
         })
 
         for r in cur:
-            m = collate_type_syntax_re.match(r['type'])
-
-            if m:
+            if m := collate_type_syntax_re.match(r['type']):
                 dtype = m.group(1)
                 collate = m.group(2)
             else:
@@ -269,12 +271,13 @@ class TableResolver(AbstractSchemaObjectResolver):
             existing_columns[r['name']] = TableColumn(
                 name=r['name'],
                 type=DataType(dtype),
-                not_null=bool(r['null?'] == 'N'),
-                default=r['default'] if r['default'] else None,
-                expression=r['expression'] if r['expression'] else None,
+                not_null=r['null?'] == 'N',
+                default=r['default'] or None,
+                expression=r['expression'] or None,
                 collate=collate,
-                comment=r['comment'] if r['comment'] else None,
+                comment=r['comment'] or None,
             )
+
 
         return existing_columns
 

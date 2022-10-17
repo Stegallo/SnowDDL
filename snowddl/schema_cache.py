@@ -34,16 +34,17 @@ class SnowDDLSchemaCache:
 
             # Skip databases not listed in settings explicitly
             if self.engine.settings.include_databases \
-            and Ident(r['name']) not in self.engine.settings.include_databases:
+                and Ident(r['name']) not in self.engine.settings.include_databases:
                 continue
 
             self.databases[r['name']] = {
                 "database": r['name'],
                 "owner": r['owner'],
-                "comment": r['comment'] if r['comment'] else None,
+                "comment": r['comment'] or None,
                 "is_transient": "TRANSIENT" in r['options'],
                 "retention_time": int(r['retention_time']),
             }
+
 
         # Process schemas in parallel
         for database_schemas in self.engine.executor.map(self._get_database_schemas, self.databases):
@@ -69,10 +70,13 @@ class SnowDDLSchemaCache:
                 "database": r['database_name'],
                 "schema": r['name'],
                 "owner": r['owner'],
-                "comment": r['comment'] if r['comment'] else None,
+                "comment": r['comment'] or None,
                 "is_transient": "TRANSIENT" in r['options'],
                 "is_managed_access": "MANAGED ACCESS" in r['options'],
-                "retention_time": int(r['retention_time']) if r['retention_time'].isdigit() else 0,
+                "retention_time": int(r['retention_time'])
+                if r['retention_time'].isdigit()
+                else 0,
             }
+
 
         return schemas

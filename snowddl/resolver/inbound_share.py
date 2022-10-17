@@ -28,8 +28,9 @@ class InboundShareResolver(AbstractResolver):
             existing_objects[r['name']] = {
                 "database": r['name'],
                 "share": r['origin'],
-                "comment": r['comment'] if r['comment'] else None,
+                "comment": r['comment'] or None,
             }
+
 
         return existing_objects
 

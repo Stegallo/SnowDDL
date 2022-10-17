@@ -10,7 +10,7 @@ class AbstractSchemaObjectResolver(AbstractResolver):
 
         # Process schemas in parallel
         for schema_objects in self.engine.executor.map(self.get_existing_objects_in_schema, self.engine.schema_cache.schemas.values()):
-            existing_objects.update(schema_objects)
+            existing_objects |= schema_objects
 
         return existing_objects
 
@@ -25,11 +25,13 @@ class AbstractSchemaObjectResolver(AbstractResolver):
     def _resolve_drop(self):
         # Drop existing objects without blueprints
         # with additional check for "sandbox" schema
-        tasks = {}
+        tasks = {
+            full_name: (self.drop_object, self.existing_objects[full_name])
+            for full_name in sorted(self.existing_objects)
+            if full_name not in self.blueprints
+            and not self._is_sandbox_schema(full_name)
+        }
 
-        for full_name in sorted(self.existing_objects):
-            if full_name not in self.blueprints and not self._is_sandbox_schema(full_name):
-                tasks[full_name] = (self.drop_object, self.existing_objects[full_name])
 
         self._process_tasks(tasks)
 
@@ -37,7 +39,4 @@ class AbstractSchemaObjectResolver(AbstractResolver):
         schema_full_name = '.'.join(object_full_name.split('.')[:2])
         schema_bp = self.config.get_blueprints_by_type(SchemaBlueprint).get(schema_full_name)
 
-        if schema_bp and schema_bp.is_sandbox:
-            return True
-
-        return False
+        return bool(schema_bp and schema_bp.is_sandbox)

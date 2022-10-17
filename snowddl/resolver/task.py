@@ -7,24 +7,22 @@ class TaskResolver(AbstractSchemaObjectResolver):
         return ObjectType.TASK
 
     def get_existing_objects_in_schema(self, schema: dict):
-        existing_objects = {}
-
         cur = self.engine.execute_meta("SHOW TASKS IN SCHEMA {database:i}.{schema:i}", {
             "database": schema['database'],
             "schema": schema['schema'],
         })
 
-        for r in cur:
-            existing_objects[f"{r['database_name']}.{r['schema_name']}.{r['name']}"] = {
+        return {
+            f"{r['database_name']}.{r['schema_name']}.{r['name']}": {
                 "database": r['database_name'],
                 "schema": r['schema_name'],
                 "name": r['name'],
                 "owner": r['owner'],
                 "predecessors": r['predecessors'],
-                "comment": r['comment'] if r['comment'] else None,
+                "comment": r['comment'] or None,
             }
-
-        return existing_objects
+            for r in cur
+        }
 
     def get_blueprints(self):
         return self.config.get_blueprints_by_type(TaskBlueprint)
