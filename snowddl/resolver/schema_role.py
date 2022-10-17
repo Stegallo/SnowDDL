@@ -1,11 +1,4 @@
-from snowddl.blueprint import (
-    DatabaseIdent,
-    FutureGrant,
-    Grant,
-    SchemaBlueprint,
-    SchemaRoleBlueprint,
-    build_role_ident,
-)
+from snowddl.blueprint import DatabaseIdent, SchemaRoleBlueprint, SchemaBlueprint, Grant, FutureGrant, build_role_ident
 from snowddl.resolver.abc_role_resolver import AbstractRoleResolver, ObjectType
 
 
@@ -27,23 +20,17 @@ class SchemaRoleResolver(AbstractRoleResolver):
         grants = []
         future_grants = []
 
-        grants.append(
-            Grant(
-                privilege="USAGE",
-                on=ObjectType.DATABASE,
-                name=DatabaseIdent(
-                    schema_bp.full_name.env_prefix, schema_bp.full_name.database
-                ),
-            )
-        )
+        grants.append(Grant(
+            privilege="USAGE",
+            on=ObjectType.DATABASE,
+            name=DatabaseIdent(schema_bp.full_name.env_prefix, schema_bp.full_name.database),
+        ))
 
-        grants.append(
-            Grant(
-                privilege="USAGE",
-                on=ObjectType.SCHEMA,
-                name=schema_bp.full_name,
-            )
-        )
+        grants.append(Grant(
+            privilege="USAGE",
+            on=ObjectType.SCHEMA,
+            name=schema_bp.full_name,
+        ))
 
         create_object_types = [
             ObjectType.FUNCTION,
@@ -53,13 +40,11 @@ class SchemaRoleResolver(AbstractRoleResolver):
         ]
 
         for object_type in create_object_types:
-            grants.append(
-                Grant(
-                    privilege=f"CREATE {object_type.singular}",
-                    on=ObjectType.SCHEMA,
-                    name=schema_bp.full_name,
-                )
-            )
+            grants.append(Grant(
+                privilege=f"CREATE {object_type.singular}",
+                on=ObjectType.SCHEMA,
+                name=schema_bp.full_name,
+            ))
 
         ownership_object_types = [
             ObjectType.EXTERNAL_TABLE,
@@ -76,47 +61,35 @@ class SchemaRoleResolver(AbstractRoleResolver):
         ]
 
         for object_type in ownership_object_types:
-            future_grants.append(
-                FutureGrant(
-                    privilege="OWNERSHIP",
-                    on=object_type,
-                    name=schema_bp.full_name,
-                )
-            )
+            future_grants.append(FutureGrant(
+                privilege="OWNERSHIP",
+                on=object_type,
+                name=schema_bp.full_name,
+            ))
 
         privileges_map = {
-            ObjectType.STAGE: ["READ", "WRITE", "USAGE"],
+            ObjectType.STAGE: ['READ', 'WRITE', 'USAGE'],
         }
 
         for object_type, privileges in privileges_map.items():
             for privilege in privileges:
-                future_grants.append(
-                    FutureGrant(
-                        privilege=privilege,
-                        on=object_type,
-                        name=schema_bp.full_name,
-                    )
-                )
+                future_grants.append(FutureGrant(
+                    privilege=privilege,
+                    on=object_type,
+                    name=schema_bp.full_name,
+                ))
 
         depends_on = []
 
         for additional_grant in schema_bp.owner_additional_grants:
             # Dependency on another schema role
-            if additional_grant.on == ObjectType.ROLE and str(
-                additional_grant.name
-            ).endswith(self.get_role_suffix()):
+            if additional_grant.on == ObjectType.ROLE and str(additional_grant.name).endswith(self.get_role_suffix()):
                 depends_on.append(additional_grant.name)
 
             grants.append(additional_grant)
 
         bp = SchemaRoleBlueprint(
-            full_name=build_role_ident(
-                self.config.env_prefix,
-                schema_bp.full_name.database,
-                schema_bp.full_name.schema,
-                "OWNER",
-                self.get_role_suffix(),
-            ),
+            full_name=build_role_ident(self.config.env_prefix, schema_bp.full_name.database, schema_bp.full_name.schema, 'OWNER', self.get_role_suffix()),
             grants=grants,
             future_grants=future_grants,
             comment=None,
@@ -129,54 +102,40 @@ class SchemaRoleResolver(AbstractRoleResolver):
         grants = []
         future_grants = []
 
-        grants.append(
-            Grant(
-                privilege="USAGE",
-                on=ObjectType.DATABASE,
-                name=DatabaseIdent(
-                    schema_bp.full_name.env_prefix, schema_bp.full_name.database
-                ),
-            )
-        )
+        grants.append(Grant(
+            privilege="USAGE",
+            on=ObjectType.DATABASE,
+            name=DatabaseIdent(schema_bp.full_name.env_prefix, schema_bp.full_name.database),
+        ))
 
-        grants.append(
-            Grant(
-                privilege="USAGE",
-                on=ObjectType.SCHEMA,
-                name=schema_bp.full_name,
-            )
-        )
+        grants.append(Grant(
+            privilege="USAGE",
+            on=ObjectType.SCHEMA,
+            name=schema_bp.full_name,
+        ))
 
         privileges_map = {
-            ObjectType.EXTERNAL_TABLE: ["SELECT", "REFERENCES"],
-            ObjectType.FILE_FORMAT: ["USAGE"],
-            ObjectType.FUNCTION: ["USAGE"],
-            ObjectType.MATERIALIZED_VIEW: ["SELECT", "REFERENCES"],
-            ObjectType.PROCEDURE: ["USAGE"],
-            ObjectType.STAGE: ["READ", "USAGE"],
-            ObjectType.STREAM: ["SELECT"],
-            ObjectType.TABLE: ["SELECT", "REFERENCES"],
-            ObjectType.VIEW: ["SELECT", "REFERENCES"],
+            ObjectType.EXTERNAL_TABLE: ['SELECT', 'REFERENCES'],
+            ObjectType.FILE_FORMAT: ['USAGE'],
+            ObjectType.FUNCTION: ['USAGE'],
+            ObjectType.MATERIALIZED_VIEW: ['SELECT', 'REFERENCES'],
+            ObjectType.PROCEDURE: ['USAGE'],
+            ObjectType.STAGE: ['READ', 'USAGE'],
+            ObjectType.STREAM: ['SELECT'],
+            ObjectType.TABLE: ['SELECT', 'REFERENCES'],
+            ObjectType.VIEW: ['SELECT', 'REFERENCES'],
         }
 
         for object_type, privileges in privileges_map.items():
             for privilege in privileges:
-                future_grants.append(
-                    FutureGrant(
-                        privilege=privilege,
-                        on=object_type,
-                        name=schema_bp.full_name,
-                    )
-                )
+                future_grants.append(FutureGrant(
+                    privilege=privilege,
+                    on=object_type,
+                    name=schema_bp.full_name,
+                ))
 
         bp = SchemaRoleBlueprint(
-            full_name=build_role_ident(
-                self.config.env_prefix,
-                schema_bp.full_name.database,
-                schema_bp.full_name.schema,
-                "READ",
-                self.get_role_suffix(),
-            ),
+            full_name=build_role_ident(self.config.env_prefix, schema_bp.full_name.database, schema_bp.full_name.schema, 'READ', self.get_role_suffix()),
             grants=grants,
             future_grants=future_grants,
             comment=None,
@@ -189,48 +148,34 @@ class SchemaRoleResolver(AbstractRoleResolver):
         grants = []
         future_grants = []
 
-        grants.append(
-            Grant(
-                privilege="USAGE",
-                on=ObjectType.DATABASE,
-                name=DatabaseIdent(
-                    schema_bp.full_name.env_prefix, schema_bp.full_name.database
-                ),
-            )
-        )
+        grants.append(Grant(
+            privilege="USAGE",
+            on=ObjectType.DATABASE,
+            name=DatabaseIdent(schema_bp.full_name.env_prefix, schema_bp.full_name.database),
+        ))
 
-        grants.append(
-            Grant(
-                privilege="USAGE",
-                on=ObjectType.SCHEMA,
-                name=schema_bp.full_name,
-            )
-        )
+        grants.append(Grant(
+            privilege="USAGE",
+            on=ObjectType.SCHEMA,
+            name=schema_bp.full_name,
+        ))
 
         privileges_map = {
-            ObjectType.STAGE: ["READ", "WRITE"],
-            ObjectType.SEQUENCE: ["USAGE"],
-            ObjectType.TABLE: ["INSERT", "UPDATE", "DELETE", "TRUNCATE"],
+            ObjectType.STAGE: ['READ', 'WRITE'],
+            ObjectType.SEQUENCE: ['USAGE'],
+            ObjectType.TABLE: ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE'],
         }
 
         for object_type, privileges in privileges_map.items():
             for privilege in privileges:
-                future_grants.append(
-                    FutureGrant(
-                        privilege=privilege,
-                        on=object_type,
-                        name=schema_bp.full_name,
-                    )
-                )
+                future_grants.append(FutureGrant(
+                    privilege=privilege,
+                    on=object_type,
+                    name=schema_bp.full_name,
+                ))
 
         bp = SchemaRoleBlueprint(
-            full_name=build_role_ident(
-                self.config.env_prefix,
-                schema_bp.full_name.database,
-                schema_bp.full_name.schema,
-                "WRITE",
-                self.get_role_suffix(),
-            ),
+            full_name=build_role_ident(self.config.env_prefix, schema_bp.full_name.database, schema_bp.full_name.schema, 'WRITE', self.get_role_suffix()),
             grants=grants,
             future_grants=future_grants,
             comment=None,

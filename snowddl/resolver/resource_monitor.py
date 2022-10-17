@@ -1,5 +1,5 @@
 from snowddl.blueprint import ResourceMonitorBlueprint
-from snowddl.resolver.abc_resolver import AbstractResolver, ObjectType, ResolveResult
+from snowddl.resolver.abc_resolver import AbstractResolver, ResolveResult, ObjectType
 
 
 class ResourceMonitorResolver(AbstractResolver):
@@ -16,21 +16,19 @@ class ResourceMonitorResolver(AbstractResolver):
         for r in cur:
             triggers = {}
 
-            triggers.update(self._parse_triggers(r["notify_at"], "NOTIFY"))
-            triggers.update(self._parse_triggers(r["suspend_at"], "SUSPEND"))
-            triggers.update(
-                self._parse_triggers(r["suspend_immediately_at"], "SUSPEND_IMMEDIATE")
-            )
+            triggers.update(self._parse_triggers(r['notify_at'], 'NOTIFY'))
+            triggers.update(self._parse_triggers(r['suspend_at'], 'SUSPEND'))
+            triggers.update(self._parse_triggers(r['suspend_immediately_at'], 'SUSPEND_IMMEDIATE'))
 
-            existing_objects[r["name"]] = {
-                "name": r["name"],
-                "credit_quota": int(float(r["credit_quota"])),
-                "frequency": r["frequency"],
-                "notify_at": r["notify_at"],
-                "suspend_at": r["suspend_at"],
-                "suspend_immediately_at": r["suspend_immediately_at"],
+            existing_objects[r['name']] = {
+                "name": r['name'],
+                "credit_quota": int(float(r['credit_quota'])),
+                "frequency": r['frequency'],
+                "notify_at": r['notify_at'],
+                "suspend_at": r['suspend_at'],
+                "suspend_immediately_at": r['suspend_immediately_at'],
                 "triggers": triggers,
-                "comment": r["comment"] if r["comment"] else None,
+                "comment": r['comment'] if r['comment'] else None,
             }
 
         return existing_objects
@@ -41,8 +39,8 @@ class ResourceMonitorResolver(AbstractResolver):
         if val is None:
             return triggers
 
-        for threshold in val.split(","):
-            threshold = threshold.strip(" %")
+        for threshold in val.split(','):
+            threshold = threshold.strip(' %')
             triggers[int(threshold)] = action
 
         return triggers
@@ -53,109 +51,75 @@ class ResourceMonitorResolver(AbstractResolver):
     def create_object(self, bp: ResourceMonitorBlueprint):
         query = self.engine.query_builder()
 
-        query.append(
-            "CREATE RESOURCE MONITOR {name:i}",
-            {
-                "name": bp.full_name,
-            },
-        )
+        query.append("CREATE RESOURCE MONITOR {name:i}", {
+            "name": bp.full_name,
+        })
 
-        query.append_nl(
-            "CREDIT_QUOTA = {credit_quota:d}",
-            {
-                "credit_quota": bp.credit_quota,
-            },
-        )
+        query.append_nl("CREDIT_QUOTA = {credit_quota:d}", {
+            "credit_quota": bp.credit_quota,
+        })
 
-        query.append_nl(
-            "FREQUENCY = {frequency}",
-            {
-                "frequency": bp.frequency,
-            },
-        )
+        query.append_nl("FREQUENCY = {frequency}", {
+            "frequency": bp.frequency,
+        })
 
         query.append_nl("START_TIMESTAMP = IMMEDIATELY")
         query.append_nl("TRIGGERS")
 
         for threshold, action in bp.triggers.items():
-            query.append_nl(
-                "ON {threshold:d} PERCENT DO {action:r}",
-                {
-                    "threshold": threshold,
-                    "action": action,
-                },
-            )
+            query.append_nl("ON {threshold:d} PERCENT DO {action:r}", {
+                "threshold": threshold,
+                "action": action,
+            })
 
-        self.engine.execute_unsafe_ddl(
-            query, condition=self.engine.settings.execute_resource_monitor
-        )
+        self.engine.execute_unsafe_ddl(query, condition=self.engine.settings.execute_resource_monitor)
 
         return ResolveResult.CREATE
 
     def compare_object(self, bp: ResourceMonitorBlueprint, row: dict):
         result = ResolveResult.NOCHANGE
 
-        if bp.credit_quota != row["credit_quota"]:
-            self.engine.execute_unsafe_ddl(
-                "ALTER RESOURCE MONITOR {name:i} SET CREDIT_QUOTA = {credit_quota:d}",
-                {
-                    "name": bp.full_name,
-                    "credit_quota": bp.credit_quota,
-                },
-                condition=self.engine.settings.execute_resource_monitor,
-            )
+        if bp.credit_quota != row['credit_quota']:
+            self.engine.execute_unsafe_ddl("ALTER RESOURCE MONITOR {name:i} SET CREDIT_QUOTA = {credit_quota:d}", {
+                "name": bp.full_name,
+                "credit_quota": bp.credit_quota,
+            }, condition=self.engine.settings.execute_resource_monitor)
 
             result = ResolveResult.ALTER
 
-        if bp.frequency != row["frequency"]:
-            self.engine.execute_unsafe_ddl(
-                "ALTER RESOURCE MONITOR {name:i} SET FREQUENCY = {frequency} START_TIMESTAMP = IMMEDIATELY",
-                {
-                    "name": bp.full_name,
-                    "frequency": bp.frequency,
-                },
-                condition=self.engine.settings.execute_resource_monitor,
-            )
+        if bp.frequency != row['frequency']:
+            self.engine.execute_unsafe_ddl("ALTER RESOURCE MONITOR {name:i} SET FREQUENCY = {frequency} START_TIMESTAMP = IMMEDIATELY", {
+                "name": bp.full_name,
+                "frequency": bp.frequency,
+            }, condition=self.engine.settings.execute_resource_monitor)
 
             result = ResolveResult.ALTER
 
-        if bp.triggers != row["triggers"]:
+        if bp.triggers != row['triggers']:
             query = self.engine.query_builder()
 
-            query.append(
-                "ALTER RESOURCE MONITOR {name:i}",
-                {
-                    "name": bp.full_name,
-                },
-            )
+            query.append("ALTER RESOURCE MONITOR {name:i}", {
+                "name": bp.full_name,
+            })
 
             query.append_nl("TRIGGERS")
 
             for threshold, action in bp.triggers.items():
-                query.append_nl(
-                    "ON {threshold:d} PERCENT DO {action:r}",
-                    {
-                        "threshold": threshold,
-                        "action": action,
-                    },
-                )
+                query.append_nl("ON {threshold:d} PERCENT DO {action:r}", {
+                    "threshold": threshold,
+                    "action": action,
+                })
 
-            self.engine.execute_unsafe_ddl(
-                query, condition=self.engine.settings.execute_resource_monitor
-            )
+            self.engine.execute_unsafe_ddl(query, condition=self.engine.settings.execute_resource_monitor)
 
             result = ResolveResult.ALTER
 
         return result
 
     def drop_object(self, row: dict):
-        self.engine.execute_unsafe_ddl(
-            "DROP RESOURCE MONITOR {name:i}",
-            {
-                "name": row["name"],
-            },
-            condition=self.engine.settings.execute_resource_monitor,
-        )
+        self.engine.execute_unsafe_ddl("DROP RESOURCE MONITOR {name:i}", {
+            "name": row['name'],
+        }, condition=self.engine.settings.execute_resource_monitor)
 
         return ResolveResult.DROP
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional
+from typing import List, TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from .ident import Ident, SchemaObjectIdent

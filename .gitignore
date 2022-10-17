@@ -1,4 +1,7 @@
-.venv/
+.*
+!/.gitignore
+!/.github
+
 __pycache__/
 *.py[cod]
 *.mypy_cache/

@@ -1,33 +1,32 @@
 from .blueprint import (
     AbstractBlueprint,
+    SchemaObjectBlueprint,
+    DependsOnMixin,
+    RoleBlueprint,
     AccountParameterBlueprint,
     BusinessRoleBlueprint,
     DatabaseBlueprint,
     DatabaseShareBlueprint,
-    DependsOnMixin,
     ExternalFunctionBlueprint,
     ExternalTableBlueprint,
     FileFormatBlueprint,
     ForeignKeyBlueprint,
     FunctionBlueprint,
-    MaskingPolicyBlueprint,
     MaterializedViewBlueprint,
+    MaskingPolicyBlueprint,
     NetworkPolicyBlueprint,
     OutboundShareBlueprint,
     PipeBlueprint,
     PrimaryKeyBlueprint,
     ProcedureBlueprint,
     ResourceMonitorBlueprint,
-    RoleBlueprint,
     RowAccessPolicyBlueprint,
     SchemaBlueprint,
-    SchemaObjectBlueprint,
     SchemaRoleBlueprint,
-    SequenceBlueprint,
     StageBlueprint,
     StageFileBlueprint,
+    SequenceBlueprint,
     StreamBlueprint,
-    T_Blueprint,
     TableBlueprint,
     TagBlueprint,
     TaskBlueprint,
@@ -36,18 +35,21 @@ from .blueprint import (
     UserBlueprint,
     ViewBlueprint,
     WarehouseBlueprint,
+    T_Blueprint,
 )
-from .column import ExternalTableColumn, NameWithType, TableColumn, ViewColumn
+
+from .column import ExternalTableColumn, TableColumn, ViewColumn, NameWithType
 from .data_type import BaseDataType, DataType
 from .edition import Edition
-from .grant import FutureGrant, Grant
+from .grant import Grant, FutureGrant
+
 from .ident import (
     AbstractIdent,
     AbstractIdentWithPrefix,
+    Ident,
     AccountIdent,
     AccountObjectIdent,
     DatabaseIdent,
-    Ident,
     InboundShareIdent,
     OutboundShareIdent,
     SchemaIdent,
@@ -56,12 +58,14 @@ from .ident import (
     StageFileIdent,
     TableConstraintIdent,
 )
+
 from .ident_builder import (
-    build_default_namespace_ident,
-    build_grant_name_ident_snowflake,
-    build_role_ident,
     build_schema_object_ident,
+    build_role_ident,
+    build_grant_name_ident_snowflake,
+    build_default_namespace_ident,
 )
+
 from .object_type import ObjectType
 from .reference import MaskingPolicyReference, RowAccessPolicyReference, TagReference
-from .stage import StageUploadFile, StageWithPath
+from .stage import StageWithPath, StageUploadFile

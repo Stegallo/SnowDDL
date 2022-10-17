@@ -3,7 +3,6 @@ from typing import List
 
 from snowddl.blueprint import DatabaseIdent, ObjectType
 
-
 @dataclass
 class SnowDDLSettings:
     execute_safe_ddl: bool = False

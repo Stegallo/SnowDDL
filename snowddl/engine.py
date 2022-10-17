@@ -1,29 +1,25 @@
-from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
-from logging import NullHandler, getLogger
+from logging import getLogger, NullHandler
 from threading import get_ident
 
-from snowflake.connector import DictCursor, Error, SnowflakeConnection
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
+from snowflake.connector import DictCursor, SnowflakeConnection, Error
 
 from snowddl.config import SnowDDLConfig
-from snowddl.context import SnowDDLContext
-from snowddl.error import SnowDDLExecuteError
+from snowddl.settings import SnowDDLSettings
 from snowddl.formatter import SnowDDLFormatter
 from snowddl.query_builder import SnowDDLQueryBuilder
+from snowddl.context import SnowDDLContext
+from snowddl.error import SnowDDLExecuteError
 from snowddl.schema_cache import SnowDDLSchemaCache
-from snowddl.settings import SnowDDLSettings
+
 
 logger = getLogger(__name__)
 logger.addHandler(NullHandler())
 
 
 class SnowDDLEngine:
-    def __init__(
-        self,
-        connection: SnowflakeConnection,
-        config: SnowDDLConfig,
-        settings: SnowDDLSettings,
-    ):
+    def __init__(self, connection: SnowflakeConnection, config: SnowDDLConfig, settings: SnowDDLSettings):
         self.connection = connection
         self.config = config
         self.settings = settings
@@ -32,10 +28,7 @@ class SnowDDLEngine:
         self.formatter = SnowDDLFormatter()
         self.format = self.formatter.format_sql
 
-        self.executor = ThreadPoolExecutor(
-            max_workers=self.settings.max_workers,
-            thread_name_prefix=self.__class__.__name__,
-        )
+        self.executor = ThreadPoolExecutor(max_workers=self.settings.max_workers, thread_name_prefix=self.__class__.__name__)
 
         self.executed_ddl = []
         self.suggested_ddl = []
@@ -94,9 +87,7 @@ class SnowDDLEngine:
         sql = self.format(sql, params)
 
         try:
-            result = self.connection.cursor(DictCursor).execute(
-                sql, file_stream=file_stream
-            )
+            result = self.connection.cursor(DictCursor).execute(sql, file_stream=file_stream)
         except Error as e:
             raise SnowDDLExecuteError(e, sql)
 

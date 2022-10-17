@@ -13,9 +13,7 @@ def test_005_step1(helper):
 
     assert {
         "columns": ["AUTHOR_ID"],
-        "ref_table": str(
-            SchemaObjectIdent(helper.env_prefix, "db1", "sc1", "table_005_01")
-        ),
+        "ref_table": str(SchemaObjectIdent(helper.env_prefix, "db1", "sc1", "table_005_01")),
         "ref_columns": ["AUTHOR_ID"],
     } in fk
 
@@ -32,17 +30,13 @@ def test_005_step2(helper):
 
     assert {
         "columns": ["AUTHOR_ID"],
-        "ref_table": str(
-            SchemaObjectIdent(helper.env_prefix, "db1", "sc1", "table_005_01")
-        ),
+        "ref_table": str(SchemaObjectIdent(helper.env_prefix, "db1", "sc1", "table_005_01")),
         "ref_columns": ["AUTHOR_ID"],
     } in fk
 
     assert {
         "columns": ["STORE_ID"],
-        "ref_table": str(
-            SchemaObjectIdent(helper.env_prefix, "db1", "sc1", "table_005_03")
-        ),
+        "ref_table": str(SchemaObjectIdent(helper.env_prefix, "db1", "sc1", "table_005_03")),
         "ref_columns": ["STORE_ID"],
     } in fk
 
